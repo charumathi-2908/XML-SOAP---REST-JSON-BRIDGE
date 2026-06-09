@@ -1611,6 +1611,42 @@ public class SoapBridgeController {
                         </button>
                       </div>
 
+                      <div className="bg-slate-950 border-b border-slate-900 px-4 py-2 shrink-0 flex flex-wrap gap-2 items-center">
+                        <span className="text-[10px] uppercase font-bold text-slate-500 font-mono mr-1">Scenario Presets:</span>
+                        <button
+                          onClick={() => {
+                            setPlaygroundPayload(JSON.stringify({
+                              merchantId: "MERCH_ACTIVE_ENT",
+                              amount: 150.00,
+                              currencyCode: "USD",
+                              cardNumber: "5105105105105105",
+                              expiryDate: "12/30",
+                              cvv: "321"
+                            }, null, 2));
+                            showToast("success", "Loaded Success Scenario Preset: Standard Credit Authorization.");
+                          }}
+                          className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-emerald-400 font-mono text-[9.5px] px-2.5 py-1 rounded transition cursor-pointer"
+                        >
+                          Success Auth Request
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPlaygroundPayload(JSON.stringify({
+                              merchantId: "MERCH_ACTIVE_ENT",
+                              amount: 5000.00,
+                              currencyCode: "EUR",
+                              cardNumber: "4000123456789012",
+                              expiryDate: "05/28",
+                              cvv: "443"
+                            }, null, 2));
+                            showToast("success", "Loaded Fault Scenario Preset: Insufficient Funds Exception.");
+                          }}
+                          className="bg-slate-900 border border-slate-800 hover:border-rose-500/40 text-rose-400 font-mono text-[9.5px] px-2.5 py-1 rounded transition cursor-pointer"
+                        >
+                          Trigger SOAP Fault (402)
+                        </button>
+                      </div>
+
                       <textarea
                         value={playgroundPayload}
                         onChange={(e) => setPlaygroundPayload(e.target.value)}
