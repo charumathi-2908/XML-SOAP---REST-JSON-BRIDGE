@@ -159,7 +159,15 @@ const DEFAULT_WSDL_TEMPLATES = [
 
 export default function App() {
   // Navigation & General Tabs
-  const [activeTab, setActiveTab] = useState<"dashboard" | "bridges" | "mapping" | "playground" | "keys" | "java">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "bridges" | "mapping" | "playground" | "keys" | "java" | "db">("dashboard");
+
+  // Database Management states
+  const [dbUsers, setDbUsers] = useState<any[]>([]);
+  const [dbBridges, setDbBridges] = useState<any[]>([]);
+  const [dbKeys, setDbKeys] = useState<any[]>([]);
+  const [dbStats, setDbStats] = useState<any>({ usersCount: 0, bridgesCount: 0, keysCount: 0, logsCount: 0 });
+  const [dbLoading, setDbLoading] = useState(false);
+  const [dbError, setDbError] = useState("");
   
   // Auth States
   const [user, setUser] = useState<any>(null);
@@ -244,15 +252,25 @@ export default function App() {
   // Auth Verification
   useEffect(() => {
     const checkCurrentUser = async () => {
+      const storedToken = localStorage.getItem("enterprise_access_token") || "";
       try {
-        const response = await fetch("/api/auth/me");
+        const response = await fetch("/api/auth/me", {
+          headers: storedToken ? { "Authorization": `Bearer ${storedToken}` } : {}
+        });
         const data = await response.json();
         if (data.success && data.user) {
           setUser(data.user);
-          setAccessToken(data.token || "session-active-cookie");
+          const actualToken = data.token || storedToken || "session-active-cookie";
+          setAccessToken(actualToken);
+          localStorage.setItem("enterprise_access_token", actualToken);
+        } else {
+          // Cleared stale token if verification failed with a bad response
+          if (storedToken) {
+            localStorage.removeItem("enterprise_access_token");
+          }
         }
       } catch (e) {
-        // Not logged in
+        // network or auth error, don't clear immediately unless deliberate
       }
     };
     checkCurrentUser();
@@ -279,10 +297,24 @@ export default function App() {
       if (data.success) {
         setUser(data.user);
         setAccessToken(data.token);
+        localStorage.setItem("enterprise_access_token", data.token);
         showToast("success", `Successfully authorized session as ${data.user.name}`);
-        fetchBridges();
-        fetchAnalytics();
-        fetchApiKeys();
+        
+        // Fetch newly logged-in user resources immediately using direct parameter rather than relying on state set loop timing
+        const directHeaders = { "Authorization": `Bearer ${data.token}` };
+        
+        // Trigger initial background queries immediately
+        fetch("/api/bridges", { headers: directHeaders })
+          .then(r => r.json())
+          .then(res => { if (res.success) setBridges(res.bridges); });
+          
+        fetch("/api/settings/api-keys", { headers: directHeaders })
+          .then(r => r.json())
+          .then(res => { if (res.success) setApiKeys(res.apiKeys); });
+          
+        fetch("/api/analytics/overview", { headers: directHeaders })
+          .then(r => r.json())
+          .then(res => { if (res.success) setAnalyticsOverview(res.overview); });
       } else {
         setAuthError(data.error?.message || "Authentication credentials verification failed.");
       }
@@ -298,6 +330,7 @@ export default function App() {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
       setAccessToken("");
+      localStorage.removeItem("enterprise_access_token");
       showToast("success", "Session invalidated and signed out clean.");
     } catch (e) {}
   };
@@ -374,14 +407,65 @@ export default function App() {
     } catch (e) {}
   };
 
+  // Fetch Database Records & Stats (SQLite DB Management)
+  const fetchDatabaseRecords = async () => {
+    if (!user) return;
+    setDbLoading(true);
+    setDbError("");
+    try {
+      const resp = await fetch("/api/admin/database/records", {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setDbUsers(data.users || []);
+        setDbBridges(data.bridges || []);
+        setDbKeys(data.keys || []);
+        setDbStats(data.stats || { usersCount: 0, bridgesCount: 0, keysCount: 0, logsCount: 0 });
+      } else {
+        setDbError(data.error?.message || "Failed to load database records.");
+      }
+    } catch (e: any) {
+      setDbError(e.message || "Network error loading modernization database.");
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  // Delete User from DB
+  const handleDeleteDbUser = async (userIdToDelete: string) => {
+    if (!window.confirm("Are you sure you want to delete this user? Their bridges, operational logs, and active keys will be permanently deleted!")) {
+      return;
+    }
+    try {
+      const resp = await fetch(`/api/admin/database/users/${userIdToDelete}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", "User account removed completely from database.");
+        fetchDatabaseRecords();
+        fetchAnalytics();
+      } else {
+        showToast("error", data.error?.message || "Could not delete user.");
+      }
+    } catch (e: any) {
+      showToast("error", "Error contacting system SQLite database.");
+    }
+  };
+
   // Trigger loading when core structures change or range filters apply
   useEffect(() => {
     if (user) {
       fetchBridges();
       fetchAnalytics();
       fetchApiKeys();
+      if (activeTab === "db") {
+        fetchDatabaseRecords();
+      }
     }
-  }, [user, activeRange]);
+  }, [user, activeRange, activeTab]);
 
   // Create Bridge Action
   const handleCreateBridgeSubmit = async (e: React.FormEvent) => {
@@ -837,8 +921,8 @@ public class SoapBridgeController {
             <div className="bg-emerald-500/10 text-emerald-400 p-3.5 rounded-xl border border-emerald-500/20 mb-3.5 shadow-inner">
               <Zap className="h-6 w-6 stroke-[2.5]" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-white">SOAP-to-REST AI Bridge</h1>
-            <p className="text-xs text-slate-400 mt-1 max-w-[280px]">Enterprise runtime modernization: dynamic proxy, secure API keys, and real-time logs parsing.</p>
+            <h1 className="text-xl font-bold tracking-tight text-white">XML/SOAP ⇄ JSON/REST Bridge</h1>
+            <p className="text-xs text-slate-400 mt-1 max-w-[280px]">Enterprise runtime modernization: instant unmarshalling, dynamic XML proxying, API security, and real-time logs.</p>
           </div>
 
           {authError && (
@@ -942,7 +1026,7 @@ public class SoapBridgeController {
           </div>
           <div className="text-left">
             <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
-              SOAP to REST Bridge
+              XML/SOAP ⇄ JSON/REST Bridge
               <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/25 font-mono">ACTIVE DIRECT ROUTING</span>
             </h1>
             <p className="text-[11px] text-slate-400">Spec-driven unmarshalling, dynamic schemas caching, and intelligent normalizer gateway.</p>
@@ -1061,27 +1145,24 @@ public class SoapBridgeController {
                 <FileCode className="h-4 w-4 shrink-0 text-emerald-400" />
                 <span>Java Source Code</span>
               </button>
-            </div>
-          </div>
 
-          {/* Prompt Log card helper */}
-          <div className="flex-1 flex flex-col justify-end text-left">
-            <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-900 space-y-2.5">
-              <div className="flex items-center space-x-2 text-slate-200 font-mono font-bold text-xs">
-                <BookOpen className="h-4 w-4 text-emerald-400" />
-                <span>Enterprise Core specs</span>
-              </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
-                Dynamic pipeline operates by mapping client REST endpoints recursively into JAXB styled XML structures, invoking mock services on standard port 3000, and stripping namespace elements dynamically.
-              </p>
               <button
-                onClick={() => handleCopy(PROMPT_LOG_MD)}
-                className="w-full text-center bg-slate-950 border border-slate-850 hover:bg-slate-900 transition-all text-[10px] py-2 font-mono text-slate-350 rounded flex items-center justify-center gap-1.5 hover:text-white"
+                onClick={() => {
+                  setActiveTab("db");
+                  fetchDatabaseRecords();
+                }}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "db"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
+                }`}
               >
-                <Copy className="h-3 w-3" /> Copy Prompt specs
+                <Database className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Database Management</span>
               </button>
             </div>
           </div>
+          <div className="flex-1" />
         </aside>
 
         {/* DETAILS CORE WORKSPACE */}
@@ -1136,11 +1217,11 @@ public class SoapBridgeController {
                     </div>
                   </div>
 
-                  <div className="flex-1 w-full text-xs">
+                  <div className="flex-1 w-full text-xs flex flex-col justify-center">
                     {analyticsTimeseries.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-slate-500 font-mono">Awaiting core pipeline requests events logs...</div>
+                      <div className="flex items-center justify-center text-slate-500 font-mono py-12">Awaiting core pipeline requests events logs...</div>
                     ) : (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height={260}>
                         <AreaChart data={analyticsTimeseries}>
                           <defs>
                             <linearGradient id="gradientRequests" x1="0" y1="0" x2="0" y2="1">
@@ -1167,11 +1248,11 @@ public class SoapBridgeController {
                 {/* ENDPOINTS EVENT BAR DISTRIBUTION */}
                 <div className="lg:col-span-4 bg-slate-900 rounded-xl border border-slate-850 p-5 flex flex-col h-[380px]">
                   <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350 mb-4 block text-left">Modern APIs load</span>
-                  <div className="flex-1 w-full text-xs">
+                  <div className="flex-1 w-full text-xs flex flex-col justify-center">
                     {analyticsByEndpoint.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-slate-550 font-mono text-center">No transactions mapped by endpoints yet.</div>
+                      <div className="flex items-center justify-center text-slate-550 font-mono text-center py-12">No transactions mapped by endpoints yet.</div>
                     ) : (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={analyticsByEndpoint} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b"/>
                           <XAxis type="number" stroke="#64748b" />
@@ -1919,6 +2000,210 @@ public class SoapBridgeController {
 
               </div>
 
+            </div>
+          )}
+
+          {/* TAB 7: DATABASE MANAGEMENT DIRECT VIEW PANEL */}
+          {activeTab === "db" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 flex justify-between items-center text-left">
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono flex items-center gap-1.5">
+                    <Database className="h-4.5 w-4.5 text-emerald-400" />
+                    Secure Modern SQLite Database Management
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Direct visual terminal displaying application schemas and raw SQLite tables state (Prisma modern translation engine).
+                  </p>
+                </div>
+                <button
+                  onClick={fetchDatabaseRecords}
+                  disabled={dbLoading}
+                  className="bg-slate-950 hover:bg-slate-850 px-3 py-1.5 rounded-lg border border-slate-800 text-xs text-slate-200 hover:text-emerald-400 font-mono transition flex items-center gap-1.5 cursor-pointer font-bold"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${dbLoading ? "animate-spin text-emerald-400" : ""}`} />
+                  Refresh Database
+                </button>
+              </div>
+
+              {/* TABLE DIAGNOSTIC METRICS */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">User Accounts</div>
+                  <div className="text-2xl font-bold font-mono text-emerald-400">{dbStats.usersCount}</div>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Bridges Configured</div>
+                  <div className="text-2xl font-bold font-mono text-white">{dbStats.bridgesCount}</div>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Issued API Keys</div>
+                  <div className="text-2xl font-bold font-mono text-blue-400">{dbStats.keysCount}</div>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Logged REST Requests</div>
+                  <div className="text-2xl font-bold font-mono text-purple-400">{dbStats.logsCount}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                
+                {/* USER ACCOUNTS MANAGEMENT TABLE */}
+                <div className="bg-slate-900 rounded-xl border border-slate-850 p-6 space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-850">
+                    <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350">
+                      User Accounts (Stored in SQLite `User` database schema)
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                      TABLE SIZE: {dbUsers.length} records
+                    </span>
+                  </div>
+
+                  {dbLoading && dbUsers.length === 0 ? (
+                    <div className="py-12 text-center text-slate-500 flex flex-col justify-center items-center gap-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                      <span className="text-xs font-mono">Querying tables schemas...</span>
+                    </div>
+                  ) : dbError ? (
+                    <div className="p-4 bg-rose-950/20 border border-rose-500/10 text-rose-300 text-xs font-mono rounded">
+                      Error: {dbError}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono text-slate-300">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-[10.5px] text-slate-500 uppercase tracking-widest">
+                            <th className="pb-3 text-left">UID / Primary Key (UUID)</th>
+                            <th className="pb-3 text-left">User Name</th>
+                            <th className="pb-3 text-left">Registered Email Address</th>
+                            <th className="pb-3 text-left">Security Role</th>
+                            <th className="pb-3 text-left">Created Timestamp</th>
+                            <th className="pb-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850/45">
+                          {dbUsers.map(u => (
+                            <tr key={u.id} className="hover:bg-slate-950/25 transition">
+                              <td className="py-3 text-slate-500 text-[10px] font-mono">{u.id}</td>
+                              <td className="py-3 text-slate-200 font-sans font-bold">{u.name}</td>
+                              <td className="py-3 text-slate-300">{u.email}</td>
+                              <td className="py-3">
+                                <span className={`px-2 py-0.5 rounded font-bold text-[9.5px] uppercase ${
+                                  u.role === "ADMIN" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                }`}>
+                                  {u.role}
+                                </span>
+                              </td>
+                              <td className="py-3 text-slate-450">{new Date(u.createdAt).toLocaleString()}</td>
+                              <td className="py-3 text-right">
+                                {u.id === user.id ? (
+                                  <span className="text-xs text-slate-500 mr-2">Your Active Session</span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleDeleteDbUser(u.id)}
+                                    className="bg-rose-950/40 hover:bg-rose-900 border border-rose-900/30 text-rose-450 hover:text-white px-2.5 py-1 text-[10px] rounded transition cursor-pointer"
+                                  >
+                                    Delete Account
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* DYNAMIC BRIDGES METADATA AND API KEYS */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* BRIDGES TABLE */}
+                  <div className="bg-slate-900 rounded-xl border border-slate-850 p-6 space-y-4">
+                    <div className="pb-2 border-b border-slate-850 flex justify-between items-center">
+                      <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350">
+                        Operational Bridges Table
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                        Total: {dbBridges.length}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto h-[220px]">
+                      <table className="w-full text-xs font-mono text-slate-300">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-[10px] text-slate-500 uppercase tracking-widest">
+                            <th className="pb-2 text-left">Bridge Name</th>
+                            <th className="pb-2 text-left">Created By (User)</th>
+                            <th className="pb-2 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850/45">
+                          {dbBridges.length === 0 ? (
+                            <tr><td colSpan={3} className="py-6 text-center text-slate-550">No bridges registered in DB.</td></tr>
+                          ) : (
+                            dbBridges.map(b => (
+                              <tr key={b.id} className="hover:bg-slate-950/10">
+                                <td className="py-2.5 text-slate-200 font-bold">{b.name}</td>
+                                <td className="py-2.5 text-slate-450">{b.user?.name || "System"}</td>
+                                <td className="py-2.5 text-right">
+                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px]">{b.status}</span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* ACTIVE API KEYS SPEC */}
+                  <div className="bg-slate-900 rounded-xl border border-slate-850 p-6 space-y-4">
+                    <div className="pb-2 border-b border-slate-850 flex justify-between items-center">
+                      <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350">
+                        Active Authorization API Keys
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                        Total Keys: {dbKeys.length}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto h-[220px]">
+                      <table className="w-full text-xs font-mono text-slate-300">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-[10px] text-slate-500 uppercase tracking-widest">
+                            <th className="pb-2 text-left">Key Label</th>
+                            <th className="pb-2 text-left">Owner Name</th>
+                            <th className="pb-2 text-right">State</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850/45">
+                          {dbKeys.length === 0 ? (
+                            <tr><td colSpan={3} className="py-6 text-center text-slate-550">No API keys registered in DB.</td></tr>
+                          ) : (
+                            dbKeys.map(k => (
+                              <tr key={k.id} className="hover:bg-slate-950/10">
+                                <td className="py-2.5 text-slate-200 font-bold">{k.name}</td>
+                                <td className="py-2.5 text-slate-450">{k.user?.name || "System"}</td>
+                                <td className="py-2.5 text-right">
+                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${k.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-450"}`}>
+                                    {k.isActive ? "ACTIVE" : "REVOKED"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
             </div>
           )}
 

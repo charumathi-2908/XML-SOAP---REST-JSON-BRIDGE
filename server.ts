@@ -270,7 +270,14 @@ async function startServer() {
   });
 
   app.get("/api/auth/me", authenticateJWT, (req: any, res) => {
-    return res.json({ success: true, user: req.user });
+    const authHeader = req.headers.authorization;
+    let token = "";
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    } else if (req.cookies && req.cookies.accessToken) {
+      token = req.cookies.accessToken;
+    }
+    return res.json({ success: true, user: req.user, token });
   });
 
   /* =====================================================================================
@@ -836,6 +843,52 @@ async function startServer() {
   });
 
   /* =====================================================================================
+   * SYSTEM DATABASE CONTROLLER / DATABASE MANAGEMENT (PHASE 6.5)
+   * =====================================================================================
+   */
+  app.get("/api/admin/database/records", authenticateJWT, async (req: any, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        select: { id: true, email: true, name: true, role: true, createdAt: true }
+      });
+      const bridges = await prisma.bridge.findMany({
+        select: { id: true, name: true, status: true, userId: true, user: { select: { name: true } } }
+      });
+      const keys = await prisma.apiKey.findMany({
+        select: { id: true, name: true, isActive: true, userId: true, user: { select: { name: true } } }
+      });
+      const logsCount = await prisma.requestLog.count();
+      
+      return res.json({
+        success: true,
+        stats: {
+          usersCount: users.length,
+          bridgesCount: bridges.length,
+          keysCount: keys.length,
+          logsCount
+        },
+        users,
+        bridges,
+        keys
+      });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: e.message } });
+    }
+  });
+
+  app.delete("/api/admin/database/users/:id", authenticateJWT, async (req: any, res) => {
+    try {
+      if (req.params.id === req.user.id) {
+        return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Cannot delete your active session user account." } });
+      }
+      await prisma.user.delete({ where: { id: req.params.id } });
+      return res.json({ success: true, message: "User account deleted successfully from modern database." });
+    } catch (e: any) {
+      return res.status(500).json({ success: false, error: { code: "SERVER_ERROR", message: e.message } });
+    }
+  });
+
+  /* =====================================================================================
    * ANALYTICS / MONITORING MODULES (PHASE 7)
    * =====================================================================================
    */
@@ -1256,7 +1309,7 @@ async function startServer() {
       if (cached.expiry > Date.now()) {
         const latencyMs = Date.now() - startTime;
         // Log cached access
-        await prisma.requestLog.create({
+        prisma.requestLog.create({
           data: {
             bridgeId,
             operationId: operation.id,
@@ -1269,7 +1322,7 @@ async function startServer() {
             responseBody: JSON.stringify(cached.data),
             ipAddress: getIp(req),
           }
-        });
+        }).catch(err => console.error("Async log save failed:", err));
         return res.json(cached.data);
       }
     }
@@ -1358,7 +1411,7 @@ async function startServer() {
           }
         };
 
-        await prisma.requestLog.create({
+        prisma.requestLog.create({
           data: {
             bridgeId,
             operationId: operation.id,
@@ -1372,7 +1425,7 @@ async function startServer() {
             errorMessage: faultString || "SOAP Fault triggered",
             ipAddress: getIp(req),
           }
-        });
+        }).catch(err => console.error("Async fault log save failed:", err));
 
         return res.status(statusCode >= 400 ? statusCode : 400).json(translatedFault);
       }
@@ -1402,7 +1455,7 @@ async function startServer() {
       }
 
       // 6. Log dynamic proxy transaction
-      await prisma.requestLog.create({
+      prisma.requestLog.create({
         data: {
           bridgeId,
           operationId: operation.id,
@@ -1415,7 +1468,7 @@ async function startServer() {
           responseBody: JSON.stringify(responseDto),
           ipAddress: getIp(req),
         }
-      });
+      }).catch(err => console.error("Async success log save failed:", err));
 
       return res.json(responseDto);
 
@@ -1431,7 +1484,7 @@ async function startServer() {
         }
       };
 
-      await prisma.requestLog.create({
+      prisma.requestLog.create({
         data: {
           bridgeId,
           operationId: operation.id,
@@ -1445,7 +1498,7 @@ async function startServer() {
           errorMessage: e.message,
           ipAddress: getIp(req),
         }
-      });
+      }).catch(err => console.error("Async exception log save failed:", err));
 
       return res.status(502).json(finalError);
     }
