@@ -1,5 +1,4 @@
 package org.bank.bridge.controller;
-
 import jakarta.validation.Valid;
 import org.bank.bridge.dto.*;
 import org.bank.bridge.service.SoapProxyService;

@@ -1,35 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Terminal, 
-  Settings, 
-  Cpu, 
-  ArrowRight, 
-  Code2, 
-  Database, 
-  FileJson, 
-  FileCode, 
-  Play, 
-  RotateCw, 
-  CheckCircle, 
-  XCircle, 
-  FileText, 
-  Download, 
-  Loader2, 
-  Zap, 
+import React, { useState, useEffect } from "react";
+import {
+  Terminal,
+  Settings,
+  Cpu,
+  ArrowRight,
+  Code2,
+  Database,
+  FileJson,
+  FileCode,
+  Play,
+  RotateCw,
+  CheckCircle,
+  XCircle,
+  FileText,
+  Download,
+  Loader2,
+  Zap,
   Braces,
   HelpCircle,
   Copy,
   Check,
   Lock,
   Eye,
-  ShieldAlert
-} from 'lucide-react';
+  ShieldAlert,
+  Key,
+  BarChart3,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Activity,
+  AlertCircle,
+  RefreshCw,
+  User,
+  LogOut,
+  Sliders,
+  Send,
+  Sparkles,
+  Search,
+  BookOpen
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from "recharts";
 
+// Shared Prompt Log
 const PROMPT_LOG_MD = `### Developer Prompt Log: Spring Boot XML/SOAP to REST/JSON Bridge with Spring Security
 **Context**: Modernization of heritage banking systems using Spring Security 6.x and JAXB Marshalling.
 
 \`\`\`markdown
-Generate a high-performance, secure XML/SOAP to REST/JSON proxy translation service using Java 21, Spring Boot 3.x, and Spring Security 6.x:
+Generate a high-performance, secure, and production-grade XML/SOAP to REST/JSON proxy translation service using Java 21, Spring Boot 3.x, and Spring Security 6.x:
 1. Validate JSON requests via validation constraints (@Valid).
 2. Use JAXB marshallers to build well-formed legacy SOAP Envelopes.
 3. Configure a secure SecurityFilterChain bean protecting route limits with JWT verification.
@@ -39,827 +70,645 @@ Generate a high-performance, secure XML/SOAP to REST/JSON proxy translation serv
 \`\`\`
 `;
 
-// MOCK SOAP/WSDL TEMPLATES
-const TEMPLATES = [
+// Default template seeds
+const DEFAULT_WSDL_TEMPLATES = [
   {
-    id: 'user-service',
-    name: 'Legacy User Management WSDL',
-    description: 'Traditional SOAP UserAccountService with Create, Get, and Delete operations.',
+    id: "payment-service",
+    name: "Legacy Bank Payment Auth WSDL",
+    description: "SOAP-based legacy bank transaction authorization with explicit currency types and account details.",
     wsdl: `<?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                  xmlns:tns="http://legacy.bank.org/userservice/"
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                  targetNamespace="http://legacy.bank.org/userservice/">
-    <wsdl:types>
-        <xsd:schema targetNamespace="http://legacy.bank.org/userservice/">
-            <xsd:element name="GetUserRequest">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="UserId" type="xsd:int"/>
-                        <xsd:element name="AuthToken" type="xsd:string"/>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
-            <xsd:element name="GetUserResponse">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="Status" type="xsd:string"/>
-                        <xsd:element name="UserProfile">
-                            <xsd:complexType>
-                                <xsd:sequence>
-                                    <xsd:element name="Id" type="xsd:int"/>
-                                    <xsd:element name="FullName" type="xsd:string"/>
-                                    <xsd:element name="EmailAddress" type="xsd:string"/>
-                                    <xsd:element name="Role" type="xsd:string"/>
-                                </xsd:sequence>
-                            </xsd:complexType>
-                        </xsd:element>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
-            <xsd:element name="SOAPFault">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="faultcode" type="xsd:string"/>
-                        <xsd:element name="faultstring" type="xsd:string"/>
-                        <xsd:element name="detail" type="xsd:string"/>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
-        </xsd:schema>
-    </wsdl:types>
-    
-    <wsdl:message name="GetUserRequestMsg">
-        <wsdl:part name="parameters" element="tns:GetUserRequest"/>
-    </wsdl:message>
-    <wsdl:message name="GetUserResponseMsg">
-        <wsdl:part name="parameters" element="tns:GetUserResponse"/>
-    </wsdl:message>
-    
-    <wsdl:portType name="UserPortType">
-        <wsdl:operation name="GetUser">
-            <wsdl:input message="tns:GetUserRequestMsg"/>
-            <wsdl:output message="tns:GetUserResponseMsg"/>
-        </wsdl:operation>
-    </wsdl:portType>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+                  xmlns:tns="http://legacy.pay.org/auth/" 
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                  targetNamespace="http://legacy.pay.org/auth/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://legacy.pay.org/auth/">
+      <xsd:element name="AuthorizePaymentRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="MerchantId" type="xsd:string"/>
+            <xsd:element name="Amount" type="xsd:decimal"/>
+            <xsd:element name="CurrencyCode" type="xsd:string"/>
+            <xsd:element name="CardNumber" type="xsd:string"/>
+            <xsd:element name="ExpiryDate" type="xsd:string"/>
+            <xsd:element name="CVV" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="AuthorizePaymentResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="TransactionId" type="xsd:string"/>
+            <xsd:element name="ResponseCode" type="xsd:string"/>
+            <xsd:element name="Status" type="xsd:string"/>
+            <xsd:element name="ApprovalCode" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:portType name="PaymentPort">
+    <wsdl:operation name="AuthorizePayment">
+      <wsdl:input message="tns:AuthorizePaymentRequest"/>
+      <wsdl:output message="tns:AuthorizePaymentResponse"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="PaymentSoapBinding" type="tns:PaymentPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="AuthorizePayment">
+      <soap:operation soapAction="http://legacy.pay.org/auth/AuthorizePayment"/>
+      <wsdl:input><soap:body use="literal"/></wsdl:input>
+      <wsdl:output><soap:body use="literal"/></wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
 </wsdl:definitions>`
   },
   {
-    id: 'payment-gateway',
-    name: 'Legacy Card payment SOAP Spec',
-    description: 'SOAP-based legacy bank transaction authorization with explicit currency types.',
+    id: "customer-service",
+    name: "Legacy Customer Data SOAP Spec",
+    description: "SOAP customer lookup and profiles access ledger hosted on historic core mainframe.",
     wsdl: `<?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-                  xmlns:tns="http://legacy.pay.org/auth/"
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-                  targetNamespace="http://legacy.pay.org/auth/">
-    <wsdl:types>
-        <xsd:schema targetNamespace="http://legacy.pay.org/auth/">
-            <xsd:element name="AuthorizePaymentRequest">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="MerchantId" type="xsd:string"/>
-                        <xsd:element name="Amount" type="xsd:decimal"/>
-                        <xsd:element name="CurrencyCode" type="xsd:string"/>
-                        <xsd:element name="CardDetails">
-                            <xsd:complexType>
-                                <xsd:sequence>
-                                    <xsd:element name="CardNumber" type="xsd:string"/>
-                                    <xsd:element name="ExpiryDate" type="xsd:string"/>
-                                    <xsd:element name="CVV" type="xsd:string"/>
-                                </xsd:sequence>
-                            </xsd:complexType>
-                        </xsd:element>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
-            <xsd:element name="AuthorizePaymentResponse">
-                <xsd:complexType>
-                    <xsd:sequence>
-                        <xsd:element name="TransactionId" type="xsd:string"/>
-                        <xsd:element name="ApprovalCode" type="xsd:string"/>
-                        <xsd:element name="ResponseCode" type="xsd:string"/>
-                        <xsd:element name="Status" type="xsd:string"/>
-                    </xsd:sequence>
-                </xsd:complexType>
-            </xsd:element>
-        </xsd:schema>
-    </wsdl:types>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+                  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+                  xmlns:tns="http://legacy.bank.org/userservice/" 
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                  targetNamespace="http://legacy.bank.org/userservice/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://legacy.bank.org/userservice/">
+      <xsd:element name="GetCustomerProfileRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="CustomerId" type="xsd:string"/>
+            <xsd:element name="UserEmail" type="xsd:string"/>
+            <xsd:element name="FullName" type="xsd:string"/>
+            <xsd:element name="AccountStatus" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:portType name="CustomerPort">
+    <wsdl:operation name="GetCustomerProfile">
+      <wsdl:input message="tns:GetCustomerProfileRequest"/>
+    </wsdl:operation>
+  </wsdl:portType>
 </wsdl:definitions>`
   }
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'parser' | 'proxy' | 'agent' | 'codeViewer'>('parser');
-  const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0]);
-  const [xmlInput, setXmlInput] = useState(TEMPLATES[0].wsdl);
-  const [copied, setCopied] = useState(false);
+  // Navigation & General Tabs
+  const [activeTab, setActiveTab] = useState<"dashboard" | "bridges" | "mapping" | "playground" | "keys" | "java">("dashboard");
+  
+  // Auth States
+  const [user, setUser] = useState<any>(null);
+  const [authEmail, setAuthEmail] = useState("developer@enterprise.org");
+  const [authName, setAuthName] = useState("Enterprise Architect");
+  const [authPassword, setAuthPassword] = useState("EnterprisePass123!");
+  const [isAuthMode, setIsAuthMode] = useState<"login" | "register">("login");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
-  // Schema Parser States
-  const [isParsing, setIsParsing] = useState(false);
-  const [parserOutput, setParserOutput] = useState<any>(null);
+  // API Token State
+  const [accessToken, setAccessToken] = useState("");
 
-  // Spring Boot Proxy States
-  const [testRestPayload, setTestRestPayload] = useState('{\n  "userId": 105,\n  "authToken": "Bearer-JWT-legacy-token-xyz556"\n}');
-  const [isProxying, setIsProxying] = useState(false);
-  const [proxyResult, setProxyResult] = useState<any>(null);
-  const [faultMappersActive, setFaultMappersActive] = useState(true);
-  const [clientTokenKey, setClientTokenKey] = useState('Bearer-JWT-legacy-token-xyz556');
-  const [hasRoleValidate, setHasRoleValidate] = useState(true);
+  // Notification Banner
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Agent Validation States
-  const [agentStep, setAgentStep] = useState<number>(0);
-  const [agentLogs, setAgentLogs] = useState<Array<{ type: 'info' | 'success' | 'warning' | 'error'; message: string; timestamp: string }>>([]);
-  const [isAgentRunning, setIsAgentRunning] = useState(false);
+  // Bridges State
+  const [bridges, setBridges] = useState<any[]>([]);
+  const [selectedBridge, setSelectedBridge] = useState<any>(null);
+  const [bridgesLoading, setBridgesLoading] = useState(false);
+  
+  // Create Bridge form
+  const [newBridgeName, setNewBridgeName] = useState("Dynamic Payment Proxy");
+  const [newBridgeDesc, setNewBridgeDesc] = useState("Real-time proxy modernisation transforming checkout events into financial SOAP transactions.");
+  const [newWsdlContent, setNewWsdlContent] = useState(DEFAULT_WSDL_TEMPLATES[0].wsdl);
+  const [newWsdlUrl, setNewWsdlUrl] = useState("");
+  const [isCreatingBridge, setIsCreatingBridge] = useState(false);
 
-  // Code Display selection
-  const [codeFile, setCodeFile] = useState<'controller' | 'security' | 'jwtFilter' | 'service' | 'entity' | 'jaxbPojo' | 'exceptionAdvice' | 'pom'>('controller');
+  // Selected Operation Details (under Mapping)
+  const [selectedOp, setSelectedOp] = useState<any>(null);
+  const [isMappingAI, setIsMappingAI] = useState(false);
+  
+  // Playground Test
+  const [playgroundPayload, setPlaygroundPayload] = useState('{\n  "merchantId": "MERCH_MOCK_ACTIVE",\n  "amount": 150.00,\n  "currencyCode": "USD",\n  "cardNumber": "4222333344445555",\n  "expiryDate": "11/29",\n  "cvv": "991"\n}');
+  const [playgroundResult, setPlaygroundResult] = useState<any>(null);
+  const [playgroundLoading, setPlaygroundLoading] = useState(false);
+  const [playgroundApiKey, setPlaygroundApiKey] = useState("");
+  const [isPayloadValidating, setIsPayloadValidating] = useState(false);
+  const [payloadValidation, setPayloadValidation] = useState<any>(null);
+  const [isSampleGenerating, setIsSampleGenerating] = useState(false);
 
-  // Sync XML input when template changes
-  useEffect(() => {
-    setXmlInput(selectedTemplate.wsdl);
-    setParserOutput(null);
-    if (selectedTemplate.id === 'user-service') {
-      setTestRestPayload('{\n  "userId": 105,\n  "authToken": "Bearer-JWT-legacy-token-xyz556"\n}');
-    } else {
-      setTestRestPayload('{\n  "merchantId": "MERCH_881",\n  "amount": 250.00,\n  "currencyCode": "USD",\n  "cardDetails": {\n    "cardNumber": "4111222233334444",\n    "expiryDate": "12/28",\n    "cvv": "123"\n  }\n}');
-    }
-  }, [selectedTemplate]);
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = useState("Core CRM integration");
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [generatedKeyVisible, setGeneratedKeyVisible] = useState("");
 
-  // Copy clipboard helper
+  // Analytics Overview states
+  const [analyticsOverview, setAnalyticsOverview] = useState<any>({
+    totalBridges: 0,
+    activeEndpoints: 0,
+    requestsToday: 0,
+    errorRate: 0
+  });
+  const [analyticsTimeseries, setAnalyticsTimeseries] = useState<any[]>([]);
+  const [analyticsByEndpoint, setAnalyticsByEndpoint] = useState<any[]>([]);
+  const [requestLogs, setRequestLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [activeRange, setActiveRange] = useState("24h");
+
+  // Code display selection for Java Tab
+  const [codeFile, setCodeFile] = useState<string>("aiGateway");
+
+  // Utilities helper
+  const showToast = (type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4500);
+  };
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    showToast("success", "Copied value to clipboard!");
   };
 
-  // 1. RUN PARSER SIMULATION (Java Output formats: records, controllers, classes)
-  const handleParseSchema = () => {
-    setIsParsing(true);
-    setParserOutput(null);
-    setTimeout(() => {
-      setIsParsing(false);
-      const isPayment = selectedTemplate.id === 'payment-gateway';
-      if (isPayment) {
-        setParserOutput({
-          serviceName: 'LegacyCardPaymentSoapSpec',
-          targetNamespace: 'http://legacy.pay.org/auth/',
-          operations: [
-            {
-              name: 'AuthorizePayment',
-              legacyXmlRoot: 'AuthorizePaymentRequest',
-              restMethod: 'POST',
-              restPath: '/api/v1/payments/authorize',
-              requiredRole: 'ROLE_PAYMENT_ADMIN',
-              javaModel: `package org.bank.bridge.dto;
-
-import jakarta.validation.constraints.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public record AuthorizePaymentRequest(
-    @NotBlank @JsonProperty("merchantId") String merchantId,
-    @NotNull @Positive @JsonProperty("amount") java.math.BigDecimal amount,
-    @NotBlank @Size(min = 3, max = 3) @JsonProperty("currencyCode") String currencyCode,
-    @NotNull @JsonProperty("cardDetails") CardDetailsDTO cardDetails
-) {}
-
-public record CardDetailsDTO(
-    @NotBlank @Size(min = 16, max = 16) String cardNumber,
-    @NotBlank String expiryDate,
-    @NotBlank @Size(min = 3, max = 4) String cvv
-) {}`
-            }
-          ]
-        });
-      } else {
-        setParserOutput({
-          serviceName: 'UserAccountService',
-          targetNamespace: 'http://legacy.bank.org/userservice/',
-          operations: [
-            {
-              name: 'GetUser',
-              legacyXmlRoot: 'GetUserRequest',
-              restMethod: 'POST',
-              restPath: '/api/v1/users/get-profile',
-              requiredRole: 'ROLE_USER',
-              javaModel: `package org.bank.bridge.dto;
-
-import jakarta.validation.constraints.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-public record GetUserRequest(
-    @NotNull @JsonProperty("userId") Integer userId,
-    @NotBlank @JsonProperty("authToken") String authToken
-) {}`
-            }
-          ]
-        });
-      }
-    }, 1200);
-  };
-
-  // 2. RUN PROXY RUNTIME SIMULATION (Java spring boot style)
-  const handleProxyTest = () => {
-    setIsProxying(true);
-    setProxyResult(null);
-    setTimeout(() => {
-      setIsProxying(false);
+  /* =====================================================================================
+   * NETWORK ACTIONS IMPLEMENTATION
+   * =====================================================================================
+   */
+  
+  // Auth Verification
+  useEffect(() => {
+    const checkCurrentUser = async () => {
       try {
-        const parsed = JSON.parse(testRestPayload);
-        const dateStr = new Date().toISOString();
-        const isUserServ = selectedTemplate.id === 'user-service';
-
-        let soapPayload = '';
-        let simulatedSoapResponse = '';
-        let restResponse = '';
-
-        // Security role simulation checks before we run
-        const isTokenEmpty = !clientTokenKey || clientTokenKey.trim() === "";
-        const isUnauthorized = hasRoleValidate && (isTokenEmpty || !clientTokenKey.includes("Bearer-JWT"));
-
-        if (isUnauthorized) {
-          setProxyResult({
-            errorType: "SpringSecurityException",
-            status: 401,
-            message: "Full authentication is required to access this resource. JWT Token is empty or signature is invalid.",
-            adviceApplied: "Spring Security Delegated AuthenticationEntryPoint returned HTTP 401 Unauthorized."
-          });
-          return;
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+          setAccessToken(data.token || "session-active-cookie");
         }
-
-        if (isUserServ) {
-          const userId = parsed.userId || 0;
-          const token = parsed.authToken || '';
-
-          soapPayload = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:user="http://legacy.bank.org/userservice/">
-   <soapenv:Header>
-      <user:SecurityContext>
-         <user:SigningKey>SECURE_BRIDGE_SIGN_KEY_2026</user:SigningKey>
-      </user:SecurityContext>
-   </soapenv:Header>
-   <soapenv:Body>
-      <user:GetUserRequest>
-         <user:UserId>${userId}</user:UserId>
-         <user:AuthToken>${token}</user:AuthToken>
-      </user:GetUserRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-          if (userId <= 0 || !token || userId === 999) {
-            simulatedSoapResponse = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-   <soapenv:Body>
-      <soapenv:Fault>
-         <faultcode>soapenv:Client.AuthenticationFailed</faultcode>
-         <faultstring>Legacy security token validation failed or User ID is invalid.</faultstring>
-         <detail>The authentication server returned error code Legacy-401 for token: ${token}. Account is inactive or blocked.</detail>
-      </soapenv:Fault>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-            restResponse = faultMappersActive 
-              ? JSON.stringify({ 
-                  error: "Unauthorized", 
-                  status: 401, 
-                  message: "Legacy security token validation failed or User ID is invalid.",
-                  legacyFaultCode: "soapenv:Client.AuthenticationFailed",
-                  resolvedVia: "@RestControllerAdvice mapping SOAP Fault to JSON error",
-                  timestamp: dateStr
-                }, null, 2)
-              : simulatedSoapResponse; // If mapper is inactive, it spits raw ugly SOAP Fault details
-          } else {
-            simulatedSoapResponse = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:user="http://legacy.bank.org/userservice/">
-   <soapenv:Body>
-      <user:GetUserResponse>
-         <user:Status>SUCCESS</user:Status>
-         <user:UserProfile>
-            <user:Id>${userId}</user:Id>
-            <user:FullName>Legacy Spring Account Holder ${userId}</user:FullName>
-            <user:EmailAddress>user_${userId}@legacy-bank-java-sdk.org</user:EmailAddress>
-            <user:Role>PRIVILEGED_CORP_USER</user:Role>
-         </user:UserProfile>
-      </user:GetUserResponse>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-            restResponse = JSON.stringify({
-              status: "success",
-              profile: {
-                id: userId,
-                fullName: `Legacy Spring Account Holder ${userId}`,
-                emailAddress: `user_${userId}@legacy-bank-java-sdk.org`,
-                role: "PRIVILEGED_CORP_USER"
-              },
-              securedBy: "Spring Security Filter Chain (Authenticated Role Context: ROLE_USER)",
-              translatedAt: dateStr
-            }, null, 2);
-          }
-        } else {
-          // Payment Simulation
-          const amount = parsed.amount || 0;
-          const cur = parsed.currencyCode || 'USD';
-          const cardNum = parsed.cardDetails?.cardNumber || 'N/A';
-
-          soapPayload = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://legacy.pay.org/auth/">
-   <soapenv:Header>
-      <pay:SecurityToken>API-X-SPRING-SECURE-KEY</pay:SecurityToken>
-   </soapenv:Header>
-   <soapenv:Body>
-      <pay:AuthorizePaymentRequest>
-         <pay:MerchantId>${parsed.merchantId || 'UNKNOWN'}</pay:MerchantId>
-         <pay:Amount>${amount}</pay:Amount>
-         <pay:CurrencyCode>${cur}</pay:CurrencyCode>
-         <pay:CardDetails>
-            <pay:CardNumber>${cardNum}</pay:CardNumber>
-            <pay:ExpiryDate>${parsed.cardDetails?.expiryDate || 'N/A'}</pay:ExpiryDate>
-            <pay:CVV>${parsed.cardDetails?.cvv || 'N/A'}</pay:CVV>
-         </pay:CardDetails>
-      </pay:AuthorizePaymentRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-          if (amount <= 0 || cardNum.startsWith('4000')) {
-            simulatedSoapResponse = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-   <soapenv:Body>
-      <soapenv:Fault>
-         <faultcode>soapenv:Server.InsufficientFunds</faultcode>
-         <faultstring>Declined: The requested authorization amount is unavailable or exceeds card daily credit limit.</faultstring>
-         <detail>Transaction declined. Java Spring SOAP mapper code resolved with banking response code Legacy-Declined-51</detail>
-      </soapenv:Fault>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-            restResponse = faultMappersActive
-              ? JSON.stringify({
-                  error: "PaymentDeclined",
-                  status: 402,
-                  message: "Declined: The requested authorization amount is unavailable.",
-                  legacyFaultCode: "soapenv:Server.InsufficientFunds",
-                  resolvedVia: "@RestControllerAdvice MapSOAPErrorCode annotations",
-                  timestamp: dateStr
-                }, null, 2)
-              : simulatedSoapResponse;
-          } else {
-            simulatedSoapResponse = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pay="http://legacy.pay.org/auth/">
-   <soapenv:Body>
-      <pay:AuthorizePaymentResponse>
-         <pay:TransactionId>TXN-J-${Math.floor(100000 + Math.random() * 900000)}</pay:TransactionId>
-         <pay:ApprovalCode>SPRING-APP-0992</pay:ApprovalCode>
-         <pay:ResponseCode>00</pay:ResponseCode>
-         <pay:Status>AUTHORIZED</pay:Status>
-      </pay:AuthorizePaymentResponse>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-            restResponse = JSON.stringify({
-              transactionId: `TXN-J-${Math.floor(100000 + Math.random() * 900000)}`,
-              approvalCode: "SPRING-APP-0992",
-              responseCode: "00",
-              status: "AUTHORIZED",
-              securedBy: "Spring Security Filter Chain (Authenticated Role Context: ROLE_PAYMENT_ADMIN)",
-              translatedAt: dateStr,
-              databaseStatus: "PERSISTED_TO_H2_LOGS_VIA_JPA"
-            }, null, 2);
-          }
-        }
-
-        setProxyResult({
-          restInput: parsed,
-          outgoingSoapXml: soapPayload,
-          legacySoapResponseXml: simulatedSoapResponse,
-          restJsonOutput: restResponse,
-          jpaLog: {
-            logged: true,
-            query: `@Transactional\npublic void saveLog(ProxyTransactionEvent event) {\n    ProxyTransactionLog log = new ProxyTransactionLog();\n    log.setServiceName("${selectedTemplate.id === 'user-service' ? 'UserAccountService' : 'LegacyCardPaymentSoapSpec'}");\n    log.setRestEndpoint("${selectedTemplate.id === 'user-service' ? '/api/v1/users/get-profile' : '/api/v1/payments/authorize'}");\n    log.setResponseCode(${simulatedSoapResponse.includes('Fault') ? (selectedTemplate.id === 'user-service' ? 401 : 402) : 200});\n    repository.save(log);\n}`
-          }
-        });
-      } catch (err: any) {
-        setProxyResult({
-          error: "Invalid JSON format entered in testing payload: " + err.message
-        });
+      } catch (e) {
+        // Not logged in
       }
-    }, 1000);
+    };
+    checkCurrentUser();
+  }, []);
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthError("");
+    
+    const path = isAuthMode === "register" ? "/api/auth/register" : "/api/auth/login";
+    const body = isAuthMode === "register" 
+      ? { name: authName, email: authEmail, password: authPassword } 
+      : { email: authEmail, password: authPassword };
+
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setUser(data.user);
+        setAccessToken(data.token);
+        showToast("success", `Successfully authorized session as ${data.user.name}`);
+        fetchBridges();
+        fetchAnalytics();
+        fetchApiKeys();
+      } else {
+        setAuthError(data.error?.message || "Authentication credentials verification failed.");
+      }
+    } catch (err: any) {
+      setAuthError("Failed reaching security mainframe: " + err.message);
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
-  // 3. RUN JAVA AGENTIC TRANSLATION LOOP SIMULATION (JVM / JUnit 5 based)
-  const startAgentLoop = () => {
-    setIsAgentRunning(true);
-    setAgentStep(1);
-    setAgentLogs([]);
-    
-    const logs = [
-      { t: 0, type: 'info', msg: 'Initializing Java Agentic modernization loop with legacy XML target namespace schemas.' },
-      { t: 800, type: 'info', msg: 'Analyzing WSDL types. Found <xsd:element name="GetUserRequest"> and complex type tags.' },
-      { t: 1600, type: 'success', msg: 'Draft 1 completed: Generated JAXB class POJOs with @XmlRootElement & Spring REST Controller.' },
-      { t: 2400, type: 'warning', msg: 'Running Test Phase 1: Initiating junit test runner against org.bank.bridge.SoapBridgeApplicationTests...' },
-      { t: 3200, type: 'error', msg: 'JUnit Failure (AssertionError): Expected generated XML elements root tag <GetUserRequest> but JAXB output marshaller missing namespace matching target http://legacy.bank.org/userservice/.' },
-      { t: 4000, type: 'info', msg: 'Initiating self-correction: Injecting classloader namespace metadata and structural exceptions into generative LLM memory context.' },
-      { t: 4800, type: 'info', msg: 'Java Agent Model refinement draft: Injecting @XmlSchema and package-info.java namespace bindings, and repairing getters/setters validation.' },
-      { t: 5600, type: 'success', msg: 'Running Test Phase 2: Compiling patched source trees and running standard Marshaller test cases...' },
-      { t: 6400, type: 'success', msg: 'JVM Compilation succeeded. All 5 JUnit test mappings passed! SOAP payload strictly complies with heritage bank standard.' },
-      { t: 7200, type: 'success', msg: 'Durable JPA logging: Synced auto-generated state metadata to persistence H2 database.' }
-    ];
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+      setAccessToken("");
+      showToast("success", "Session invalidated and signed out clean.");
+    } catch (e) {}
+  };
 
-    logs.forEach((logItem, index) => {
-      setTimeout(() => {
-        setAgentLogs(prev => [
-          ...prev, 
-          { 
-            type: logItem.type as any, 
-            message: logItem.msg, 
-            timestamp: new Date().toLocaleTimeString() 
+  // Fetch Bridges
+  const fetchBridges = async () => {
+    if (!user) return;
+    setBridgesLoading(true);
+    try {
+      const resp = await fetch("/api/bridges", {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setBridges(data.bridges);
+        // Automatically select the first bridge if none chosen
+        if (data.bridges.length > 0 && !selectedBridge) {
+          setSelectedBridge(data.bridges[0]);
+          if (data.bridges[0].operations?.length > 0) {
+            setSelectedOp(data.bridges[0].operations[0]);
           }
-        ]);
-        setAgentStep(index + 1);
-        if (index === logs.length - 1) {
-          setIsAgentRunning(false);
         }
-      }, logItem.t);
-    });
+      }
+    } catch (e) {
+      showToast("error", "Failed fetching registered bridges.");
+    } finally {
+      setBridgesLoading(false);
+    }
   };
 
-  // SPRING BOOT 3 & SPRING SECURITY 6 JAVA CODE BLOCKS
-  const JAVA_CODE = {
-    controller: `package org.bank.bridge.controller;
+  // Fetch Analytics & Logs
+  const fetchAnalytics = async () => {
+    if (!user) return;
+    try {
+      const headers = { "Authorization": `Bearer ${accessToken}` };
+      
+      const overviewResp = await fetch("/api/analytics/overview", { headers });
+      const overviewData = await overviewResp.json();
+      if (overviewData.success) setAnalyticsOverview(overviewData.overview);
 
-import jakarta.validation.Valid;
-import org.bank.bridge.dto.*;
-import org.bank.bridge.service.SoapProxyService;
-import org.bank.bridge.entity.ProxyTransactionLog;
-import org.bank.bridge.repository.ProxyLogRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+      const tsResp = await fetch(`/api/analytics/timeseries?range=${activeRange}`, { headers });
+      const tsData = await tsResp.json();
+      if (tsData.success) setAnalyticsTimeseries(tsData.timeseries);
 
-@RestController
-@RequestMapping("/api/v1")
-public class SoapBridgeController {
-    
-    private static final Logger log = LoggerFactory.getLogger(SoapBridgeController.class);
-    private final SoapProxyService proxyService;
-    private final ProxyLogRepository logRepository;
+      const endpointResp = await fetch("/api/analytics/by-endpoint", { headers });
+      const endpointData = await endpointResp.json();
+      if (endpointData.success) setAnalyticsByEndpoint(endpointData.byEndpoint);
 
-    public SoapBridgeController(SoapProxyService proxyService, ProxyLogRepository logRepository) {
-        this.proxyService = proxyService;
-        this.logRepository = logRepository;
+      setLogsLoading(true);
+      const logsResp = await fetch("/api/logs?page=1&limit=20", { headers });
+      const logsData = await logsResp.json();
+      if (logsData.success) setRequestLogs(logsData.logs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLogsLoading(false);
     }
+  };
 
-    @PostMapping("/users/get-profile")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<UserResponseDTO> getUserProfile(@Valid @RequestBody GetUserRequest request) {
-        log.info("Processing secure REST User GET request for ID: {}", request.userId());
-        
-        // Execute conversion, XML Marshalling and make outbound SOAP call
-        UserResponseDTO response = proxyService.callLegacyUserSoap(request);
-        
-        // Persist transaction log
-        logRepository.save(new ProxyTransactionLog(
-            "UserAccountService",
-            "/api/v1/users/get-profile",
-            "GetUser",
-            "SUCCESS",
-            200
-        ));
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/payments/authorize")
-    @PreAuthorize("hasRole('PAYMENT_ADMIN')")
-    public ResponseEntity<PaymentResponseDTO> authorizePayment(@Valid @RequestBody AuthorizePaymentRequest request) {
-        log.info("Processing secure Payment Authorize for Merchant: {}, Amount: {}", 
-            request.merchantId(), request.amount());
-        
-        PaymentResponseDTO response = proxyService.callLegacyPaymentSoap(request);
-        
-        logRepository.save(new ProxyTransactionLog(
-            "LegacyCardPaymentSoapSpec",
-            "/api/v1/payments/authorize",
-            "AuthorizePayment",
-            "SUCCESS",
-            200
-        ));
-        
-        return ResponseEntity.ok(response);
-    }
-}`,
-
-    security: `package org.bank.bridge.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-@Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
-public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
-        this.jwtAuthenticationFilter = jwtFilter;
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/health", "/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            // JWT verification filter protects route limits before reaching the legacy bridge proxy
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
-}`,
-
-    jaxbPojo: `package org.bank.bridge.dto;
-
-import jakarta.xml.bind.annotation.*;
-
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {
-    "userId",
-    "authToken"
-})
-@XmlRootElement(name = "GetUserRequest", namespace = "http://legacy.bank.org/userservice/")
-public class GetUserRequestJaxb {
-
-    @XmlElement(name = "UserId", namespace = "http://legacy.bank.org/userservice/")
-    protected int userId;
-
-    @XmlElement(name = "AuthToken", namespace = "http://legacy.bank.org/userservice/", required = true)
-    protected String authToken;
-
-    public int getUserId() { return userId; }
-    public void setUserId(int value) { this.userId = value; }
-
-    public String getAuthToken() { return authToken; }
-    public void setAuthToken(String value) { this.authToken = value; }
-}`,
-
-    exceptionAdvice: `package org.bank.bridge.exception;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
-import java.time.Instant;
-import java.util.Map;
-
-@RestControllerAdvice
-public class GlobalBridgeExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalBridgeExceptionHandler.class);
-
-    @ExceptionHandler(LegacySoapFaultException.class)
-    public ResponseEntity<Map<String, Object>> handleSoapFault(LegacySoapFaultException ex) {
-        String faultXml = ex.getSoapFaultXml();
-        log.warn("SOAP Fault caught from Legacy Banking Client system. Introspecting codes...");
-
-        String faultCode = "soapenv:Server";
-        String faultString = "Legacy service integration failed";
-        String detail = "";
-
-        try {
-            // Standard Java DOM Builder parser
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new InputSource(new StringReader(faultXml)));
-
-            if (doc.getElementsByTagName("faultcode").getLength() > 0) {
-                faultCode = doc.getElementsByTagName("faultcode").item(0).getTextContent();
-            }
-            if (doc.getElementsByTagName("faultstring").getLength() > 0) {
-                faultString = doc.getElementsByTagName("faultstring").item(0).getTextContent();
-            }
-            if (doc.getElementsByTagName("detail").getLength() > 0) {
-                detail = doc.getElementsByTagName("detail").item(0).getTextContent();
-            }
-        } catch (Exception e) {
-            log.error("Failed to parse Legacy XML SOAP Fault payload, falling back to string scan.", e);
+  // Fetch API Keys
+  const fetchApiKeys = async () => {
+    if (!user) return;
+    try {
+      const resp = await fetch("/api/settings/api-keys", {
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setApiKeys(data.apiKeys);
+        if (data.apiKeys.length > 0 && !playgroundApiKey) {
+          setPlaygroundApiKey(data.apiKeys[0].key);
         }
+      }
+    } catch (e) {}
+  };
 
-        // SPRING REST EXCEPTION CONVERTER
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        if (faultCode.contains("AuthenticationFailed")) {
-            status = HttpStatus.UNAUTHORIZED; // Convert to 401
-        } else if (faultCode.contains("InsufficientFunds")) {
-            status = HttpStatus.PAYMENT_REQUIRED; // Convert to 402
-        } else if (faultCode.contains("InvalidRequest")) {
-            status = HttpStatus.BAD_REQUEST; // Convert to 400
+  // Trigger loading when core structures change or range filters apply
+  useEffect(() => {
+    if (user) {
+      fetchBridges();
+      fetchAnalytics();
+      fetchApiKeys();
+    }
+  }, [user, activeRange]);
+
+  // Create Bridge Action
+  const handleCreateBridgeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBridgeName || !newWsdlContent) {
+      showToast("error", "Please provide a valid XML WSDL config.");
+      return;
+    }
+
+    setIsCreatingBridge(true);
+    try {
+      const resp = await fetch("/api/bridges", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          name: newBridgeName,
+          description: newBridgeDesc,
+          wsdlContent: newWsdlContent,
+          wsdlUrl: newWsdlUrl || null
+        })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", `Bridge "${newBridgeName}" configured successfully with ${data.bridge.operations?.length} dynamic operations!`);
+        setNewBridgeName("");
+        setNewBridgeDesc("");
+        // Refresh
+        await fetchBridges();
+        await fetchAnalytics();
+        setSelectedBridge(data.bridge);
+        if (data.bridge.operations?.length > 0) {
+          setSelectedOp(data.bridge.operations[0]);
         }
-
-        return ResponseEntity.status(status).body(Map.of(
-            "error", status.getReasonPhrase(),
-            "status", status.value(),
-            "message", faultString,
-            "legacyFaultCode", faultCode,
-            "detail", detail,
-            "timestamp", Instant.now().toString()
-        ));
+        setActiveTab("mapping");
+      } else {
+        showToast("error", data.error?.message || "Syntax exception occurred compiling WSDL.");
+      }
+    } catch (err: any) {
+      showToast("error", "Network execution failed: " + err.message);
+    } finally {
+      setIsCreatingBridge(false);
     }
-}`,
+  };
 
-    jwtFilter: `package org.bank.bridge.config;
+  // Delete Bridge
+  const handleDeleteBridge = async (id: string) => {
+    if (!window.confirm("Are you completely certain? Cascade deletion is irreversible.")) return;
+    try {
+      const resp = await fetch(`/api/bridges/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", "Bridge decommissioned and deleted successfully.");
+        setSelectedBridge(null);
+        setSelectedOp(null);
+        fetchBridges();
+        fetchAnalytics();
+      }
+    } catch (e) {
+      showToast("error", "Failed decommissioning target bridge.");
+    }
+  };
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import java.io.IOException;
-import java.util.List;
+  // Turn Bridges Status Toggle
+  const handleToggleBridgeStatus = async (bridge: any) => {
+    const targetStatus = bridge.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    try {
+      const resp = await fetch(`/api/bridges/${bridge.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ status: targetStatus })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", `Bridge is now successfully toggled to ${targetStatus}`);
+        fetchBridges();
+        fetchAnalytics();
+      }
+    } catch (e) {
+      showToast("error", "Exception toggling operational state.");
+    }
+  };
 
-@Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            
-            // Extracts role based on token signature simulation
-            String role = "ROLE_USER";
-            if (token.contains("payment-admin")) {
-                role = "ROLE_PAYMENT_ADMIN";
-            }
-
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                "legacy-client", 
-                null, 
-                List.of(new SimpleGrantedAuthority(role))
-            );
-            SecurityContextHolder.getContext().setAuthentication(auth);
+  // AI Mappings Normalization
+  const handleTriggerAIMapping = async () => {
+    if (!selectedBridge || !selectedOp) return;
+    setIsMappingAI(true);
+    try {
+      const resp = await fetch(`/api/bridges/${selectedBridge.id}/operations/${selectedOp.id}/map-fields`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success && data.mappings) {
+        // Save verified results back to operational configuration
+        const updateResp = await fetch(`/api/bridges/${selectedBridge.id}/operations/${selectedOp.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({ fieldMappings: data.mappings })
+        });
+        const updateData = await updateResp.json();
+        if (updateData.success) {
+          showToast("success", `Google Gemini mapped ${data.mappings.length} parameters successfully with direct reasoning indices!`);
+          fetchBridges();
         }
-
-        filterChain.doFilter(request, response);
+      }
+    } catch (e) {
+      showToast("error", "Dynamic AI Field modernization mapping execution failed.");
+    } finally {
+      setIsMappingAI(false);
     }
-}`,
+  };
 
-    service: `package org.bank.bridge.service;
+  // AI JSON Validator Playground
+  const handleExecuteValidator = async () => {
+    if (!selectedBridge || !selectedOp) return;
+    setIsPayloadValidating(true);
+    setPayloadValidation(null);
+    try {
+      let bodyObj = {};
+      try {
+        bodyObj = JSON.parse(playgroundPayload);
+      } catch {
+        showToast("error", "Malformed REST Client JSON payload syntax.");
+        setIsPayloadValidating(false);
+        return;
+      }
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.Marshaller;
-import org.bank.bridge.dto.*;
-import org.bank.bridge.exception.LegacySoapFaultException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import java.io.StringWriter;
-
-@Service
-public class SoapProxyService {
-
-    private final RestTemplate restTemplate = new RestTemplate();
-    private static final String SOAP_ENDPOINT = "http://localhost:8080/legacy/ws";
-
-    public UserResponseDTO callLegacyUserSoap(GetUserRequest req) {
-        try {
-            JAXBContext context = JAXBContext.newInstance(GetUserRequestJaxb.class);
-            Marshaller marshaller = context.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-
-            GetUserRequestJaxb jaxbReq = new GetUserRequestJaxb();
-            jaxbReq.setUserId(req.userId());
-            jaxbReq.setAuthToken(req.authToken());
-
-            StringWriter sw = new StringWriter();
-            marshaller.marshal(jaxbReq, sw);
-            String soapEnvelope = sw.toString();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.TEXT_XML);
-            headers.set("SOAPAction", "http://legacy.bank.org/userservice/GetUser");
-
-            HttpEntity<String> entity = new HttpEntity<>(soapEnvelope, headers);
-            String response = restTemplate.postForObject(SOAP_ENDPOINT, entity, String.class);
-
-            if (response != null && response.contains("<soapenv:Fault>")) {
-                throw new LegacySoapFaultException(response);
-            }
-
-            return new UserResponseDTO("success", new UserResponseDTO.Profile(
-                req.userId(),
-                "Legacy Spring Account Holder " + req.userId(),
-                "user_" + req.userId() + "@legacy-bank-java-sdk.org",
-                "PRIVILEGED_CORP_USER"
-            ));
-        } catch (Exception e) {
-            if (e instanceof LegacySoapFaultException) {
-                throw (LegacySoapFaultException) e;
-            }
-            throw new RuntimeException("SOAP invocation error", e);
+      const resp = await fetch(`/api/bridges/${selectedBridge.id}/operations/${selectedOp.id}/validate-payload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ requestBody: bodyObj })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setPayloadValidation({
+          valid: data.valid,
+          errors: data.errors,
+          suggestions: data.suggestions
+        });
+        if (data.valid) {
+          showToast("success", "JSON request matches structural schema mapping expectations!");
+        } else {
+          showToast("error", "Mapping payload mismatches expected legacy fields.");
         }
+      }
+    } catch (e) {
+      showToast("error", "AI Schema validation verification pipeline crashed.");
+    } finally {
+      setIsPayloadValidating(false);
     }
+  };
 
-    public PaymentResponseDTO callLegacyPaymentSoap(AuthorizePaymentRequest req) {
-        try {
-            StringWriter sw = new StringWriter();
-            // JAXB Marshalling payment parameters logic here
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.TEXT_XML);
-            headers.set("SOAPAction", "http://legacy.pay.org/auth/AuthorizePayment");
+  // AI sample mock generator
+  const handleGenerateSamples = async () => {
+    if (!selectedBridge || !selectedOp) return;
+    setIsSampleGenerating(true);
+    try {
+      const resp = await fetch(`/api/bridges/${selectedBridge.id}/operations/${selectedOp.id}/generate-samples`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success && data.samples) {
+        setPlaygroundPayload(JSON.stringify(data.samples.sampleRequest, null, 2));
+        showToast("success", "Generated highly realistic JSON payloads matching configuration mappings.");
+      }
+    } catch (e) {
+      showToast("error", "AI Sample generation engine failed.");
+    } finally {
+      setIsSampleGenerating(false);
+    }
+  };
 
-            if (req.amount().doubleValue() <= 0) {
-                String faultResponse = "<?xml version=\"1.0\" encoding=\"utf-8\"?><soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Body><soapenv:Fault><faultcode>soapenv:Server.InsufficientFunds</faultcode><faultstring>Declined: The requested authorization amount is unavailable or exceeds card daily credit limit.</faultstring></soapenv:Fault></soapenv:Body></soapenv:Envelope>";
-                throw new LegacySoapFaultException(faultResponse);
-            }
+  // Run dynamic REST to SOAP proxy call
+  const handleExecutePlaygroundCall = async () => {
+    if (!selectedBridge || !selectedOp) return;
+    playgroundResult && setPlaygroundResult(null);
+    playgroundLoading || setPlaygroundLoading(true);
 
-            return new PaymentResponseDTO(
-                "TXN-J-" + System.currentTimeMillis(),
-                "SPRING-APP-0992",
-                "00",
-                "AUTHORIZED"
-            );
-        } catch (Exception e) {
-            if (e instanceof LegacySoapFaultException) {
-                throw (LegacySoapFaultException) e;
-            }
-            throw new RuntimeException("SOAP payment integration failed", e);
+    try {
+      let bodyObj = {};
+      try {
+        bodyObj = JSON.parse(playgroundPayload);
+      } catch {
+        showToast("error", "Parsing payload failed. Check your JSON format.");
+        setPlaygroundLoading(false);
+        return;
+      }
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (selectedOp.authRequired) {
+        if (playgroundApiKey) {
+          headers["X-API-KEY"] = playgroundApiKey;
+        } else {
+          headers["Authorization"] = `Bearer ${accessToken}`;
         }
+      }
+
+      // Proxy path
+      const pathUrl = `/p/${selectedBridge.id}${selectedOp.restPath}`;
+      const startMs = Date.now();
+
+      const resp = await fetch(pathUrl, {
+        method: selectedOp.restMethod.toUpperCase(),
+        headers,
+        body: JSON.stringify(bodyObj)
+      });
+      
+      const latencyMs = Date.now() - startMs;
+      const data = await resp.json();
+
+      setPlaygroundResult({
+        statusCode: resp.status,
+        latencyMs,
+        response: data
+      });
+
+      if (resp.status === 200) {
+        showToast("success", "Dynamic proxy call modernized downstream and completed successfully!");
+      } else {
+        showToast("error", `Legacy endpoint returned error code Fault: ${data.error?.message || "Failed"}`);
+      }
+
+      // Refresh Analytics state
+      fetchAnalytics();
+    } catch (err: any) {
+      showToast("error", "Failed triggering runtime bridge connector: " + err.message);
+    } finally {
+      setPlaygroundLoading(false);
     }
-}`,
+  };
 
-    entity: `package org.bank.bridge.entity;
-
-import jakarta.persistence.*;
-import java.time.Instant;
-
-@Entity
-@Table(name = "proxy_transaction_logs")
-public class ProxyTransactionLog {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String serviceName;
-    private String restEndpoint;
-    private String actionName;
-    private String status;
-    private int responseCode;
-    private Instant timestamp;
-
-    public ProxyTransactionLog() {
-        this.timestamp = Instant.now();
+  // Create API keys settings
+  const handleCreateApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKeyName) return;
+    isCreatingKey || setIsCreatingKey(true);
+    try {
+      const resp = await fetch("/api/settings/api-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ name: newKeyName })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", "API security credentials created successfully.");
+        setGeneratedKeyVisible(data.rawKey);
+        setNewKeyName("");
+        fetchApiKeys();
+      }
+    } catch (e) {
+      showToast("error", "Failed creating programmatic credentials keys.");
+    } finally {
+      setIsCreatingKey(false);
     }
+  };
 
-    public ProxyTransactionLog(String serviceName, String restEndpoint, String actionName, String status, int responseCode) {
-        this();
-        this.serviceName = serviceName;
-        this.restEndpoint = restEndpoint;
-        this.actionName = actionName;
-        this.status = status;
-        this.responseCode = responseCode;
+  // Revoke API Keys
+  const handleRevokeApiKey = async (id: string) => {
+    if (!window.confirm("Are you completely certain? Active systems using this security token will fail immediately.")) return;
+    try {
+      const resp = await fetch(`/api/settings/api-keys/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast("success", "Programmatic authentication token revoked successfully.");
+        fetchApiKeys();
+      }
+    } catch (e) {
+      showToast("error", "Failed revoking credentials.");
     }
+  };
 
-    // Standard getters and setters...
-    public Long getId() { return id; }
-    public String getServiceName() { return serviceName; }
-    public String getRestEndpoint() { return restEndpoint; }
-    public String getActionName() { return actionName; }
-    public String getStatus() { return status; }
-    public int getResponseCode() { return responseCode; }
-    public Instant getTimestamp() { return timestamp; }
-}`,
+  // Seed standard sandbox payload
+  const handleSeedSandboxTemplate = async () => {
+    try {
+      const resp = await fetch("/api/seed-sandbox-wsdl", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}` }
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setNewWsdlContent(data.wsdl);
+        setNewBridgeName("Dynamic Payment Proxy");
+        setNewBridgeDesc("Automated payment checkout events unmarshalling recursively into financial SOAP transactions.");
+        showToast("success", "Loaded enterprise sandbox test spec template! Ready to compile and modernization.");
+      }
+    } catch (e) {}
+  };
 
+  // Dynamic WSDL config selection sync
+  const selectTemplateAndLoad = (id: string) => {
+    const findT = DEFAULT_WSDL_TEMPLATES.find(t => t.id === id);
+    if (findT) {
+      setNewWsdlContent(findT.wsdl);
+      setNewBridgeName(findT.id === "payment-service" ? "Dynamic Payment Proxy" : "Legacy CRM Ledger Connector");
+      setNewBridgeDesc(findT.description);
+    }
+  };
+
+  /* =====================================================================================
+   * PREVIEW SOURCE VIEWS (ENTERPRISE SPRING CODES)
+   * =====================================================================================
+   */
+  const LOGS_COUNT = requestLogs.length;
+
+  const JAVA_CLASS_CODES: Record<string, string> = {
     pom: `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -916,794 +765,1129 @@ public class ProxyTransactionLog {
             <version>4.0.1</version>
             <scope>runtime</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
+</project>`,
+    aiGateway: `package org.bank.gateway;
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>`
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.*;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+@SpringBootApplication
+public class AiSoapRestGatewayApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(AiSoapRestGatewayApplication.class, args);
+    }
+}`,
+    controller: `package org.bank.bridge.controller;
+
+import jakarta.validation.Valid;
+import org.bank.bridge.dto.*;
+import org.bank.bridge.service.SoapProxyService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1")
+public class SoapBridgeController {
+    private static final Logger log = LoggerFactory.getLogger(SoapBridgeController.class);
+    private final SoapProxyService proxyService;
+
+    public SoapBridgeController(SoapProxyService proxyService) {
+        this.proxyService = proxyService;
+    }
+
+    @PostMapping("/payments/authorize")
+    public ResponseEntity<PaymentResponseDTO> authorizePayment(@Valid @RequestBody AuthorizePaymentRequest request) {
+        log.info("Processing secure REST Payment for Merchant: {}", request.merchantId());
+        PaymentResponseDTO response = proxyService.callLegacyPaymentSoap(request);
+        return ResponseEntity.ok(response);
+    }
+}`
   };
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* HEADER SECTION */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center space-x-3">
-          <div className="bg-emerald-500/10 text-emerald-400 p-2 rounded-lg border border-emerald-500/20">
-            <Zap className="h-5 w-5" />
+  /* =====================================================================================
+   * RENDERING THE SPLENDID MODERN INTERFACE
+   * =====================================================================================
+   */
+  if (!user) {
+    // Authenticate Landing Stage
+    return (
+      <div id="auth-main-card" className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 font-sans relative overflow-hidden">
+        {/* Subtle decorative orb highlights */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 relative z-10">
+          <div className="flex flex-col items-center mb-8 text-center">
+            <div className="bg-emerald-500/10 text-emerald-400 p-3.5 rounded-xl border border-emerald-500/20 mb-3.5 shadow-inner">
+              <Zap className="h-6 w-6 stroke-[2.5]" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-white">SOAP-to-REST AI Bridge</h1>
+            <p className="text-xs text-slate-400 mt-1 max-w-[280px]">Enterprise runtime modernization: dynamic proxy, secure API keys, and real-time logs parsing.</p>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight text-white flex items-center gap-2">
-              Java SOAP to REST Bridge
-              <span className="text-xs bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/35 font-mono">Spring Boot & Security</span>
-            </h1>
-            <p className="text-xs text-slate-400">Automated Java 21 WSDL Mapper, Spring Security interceptor, and enterprise JAXB XML fault converter</p>
+
+          {authError && (
+            <div className="bg-rose-500/10 border border-rose-500/25 text-rose-300 p-3 rounded-lg text-xs flex items-center gap-2 mb-6 animate-shake">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleAuthSubmit} className="space-y-4">
+            {isAuthMode === "register" && (
+              <div className="space-y-1.5 text-left">
+                <label className="text-[11px] font-medium text-slate-400 font-mono tracking-wider">FULL NAME</label>
+                <input
+                  type="text"
+                  required
+                  value={authName}
+                  onChange={(e) => setAuthName(e.target.value)}
+                  placeholder="e.g. Senior Architect"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder:text-slate-650 outline-none focus:border-slate-700 font-mono"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5 text-left font-mono">
+              <label className="text-[11px] font-medium text-slate-400 tracking-wider">EMAIL ADDRESS</label>
+              <input
+                type="email"
+                required
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                placeholder="e.g. architect@bank.org"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder:text-slate-650 outline-none focus:border-slate-700"
+              />
+            </div>
+
+            <div className="space-y-1.5 text-left font-mono">
+              <div className="flex justify-between items-center text-[11px]">
+                <label className="font-medium text-slate-400 tracking-wider">SECURITY PASSPHRASE</label>
+              </div>
+              <input
+                type="password"
+                required
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder="•••••••••••••"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder:text-slate-650 outline-none focus:border-slate-700"
+              />
+            </div>
+
+            <button
+              id="btn-auth-submit"
+              type="submit"
+              disabled={authLoading}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs py-3 rounded-lg flex items-center justify-center space-x-2 transition disabled:opacity-50 cursor-pointer shadow-lg mt-6"
+            >
+              {authLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-300" /> : <Play className="h-4 w-4" />}
+              <span>{isAuthMode === "register" ? "Provision Account Access" : "Authenticate Mainframe Credentials"}</span>
+            </button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-slate-800/60 text-center text-xs">
+            <button
+              onClick={() => {
+                setIsAuthMode(isAuthMode === "login" ? "register" : "login");
+                setAuthError("");
+              }}
+              className="text-slate-400 underline hover:text-emerald-400 font-mono transition"
+            >
+              {isAuthMode === "login" ? "Create modern developer account package" : "Return to active authorization portal"}
+            </button>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-md border border-slate-800 text-xs text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>JVM & Spring Security Rules Configured</span>
+      </div>
+    );
+  }
+
+  // Dashboard Stage
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans relative">
+      {/* Dynamic Toast System notifications */}
+      {notification && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-2xl flex items-start gap-3.5 max-w-sm animate-slide-in">
+          {notification.type === "success" ? (
+            <div className="text-emerald-400 bg-emerald-500/10 p-1 rounded-full"><CheckCircle className="h-4 w-4 stroke-[2.5]" /></div>
+          ) : (
+            <div className="text-rose-450 bg-rose-500/10 p-1 rounded-full"><XCircle className="h-4 w-4" /></div>
+          )}
+          <div className="space-y-0.5 text-left text-xs">
+            <p className="text-slate-200 font-bold">{notification.type === "success" ? "Operation Executed" : "Security Intercept Alert"}</p>
+            <p className="text-slate-400 font-mono">{notification.message}</p>
           </div>
+        </div>
+      )}
+
+      {/* HEADER BAR */}
+      <header className="border-b border-slate-900 bg-slate-900/45 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-45 shrink-0">
+        <div className="flex items-center space-x-3.5">
+          <div className="bg-emerald-500/10 text-emerald-400 p-2.5 rounded-xl border border-emerald-500/15">
+            <Zap className="h-5 w-5" />
+          </div>
+          <div className="text-left">
+            <h1 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
+              SOAP to REST Bridge
+              <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/25 font-mono">ACTIVE DIRECT ROUTING</span>
+            </h1>
+            <p className="text-[11px] text-slate-400">Spec-driven unmarshalling, dynamic schemas caching, and intelligent normalizer gateway.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-slate-950 px-3.5 py-1.5 rounded-lg border border-slate-850 text-xs">
+            <User className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-slate-300 font-mono">{user.name}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse ml-1" />
+          </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-rose-400 rounded-lg border border-slate-800 transition cursor-pointer"
+            title="Sign out of bridge gateway"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </header>
 
-      {/* DETAILED PROJECT INFO ALERT */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-3">
-          <Settings className="text-emerald-400 h-4 w-4 shrink-0" />
-          <span>
-            <strong className="text-slate-200">Active Architecture:</strong> Java 21 | Spring Boot 3.x | Spring Security 6.x | Spring Data JPA | H@/H2 Logs
-          </span>
-        </div>
-        <div className="flex items-center space-x-2 bg-slate-950 px-2 py-1 rounded border border-slate-800">
-          <span className="text-slate-400">Target Framework Build:</span>
-          <span className="text-emerald-400 font-mono font-bold">mvn spring-boot:run</span>
-        </div>
-      </div>
-
-      {/* CORE WORKSPACE PANELS */}
-      <div className="flex-1 lg:grid lg:grid-cols-12 overflow-hidden">
+      {/* MAIN CONTAINER */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         
-        {/* LEFT NAV PANEL */}
-        <aside className="lg:col-span-3 border-r border-slate-800 bg-slate-950 p-6 flex flex-col space-y-5">
+        {/* SIDE BAR BUTTON NAVIGATION */}
+        <aside className="w-full md:w-64 border-r border-slate-900 bg-slate-950 p-5 flex flex-col space-y-4 shrink-0">
           <div>
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Architectural Components</h2>
-            <div className="space-y-2">
-              <button 
-                id="btn-parser-tab"
-                onClick={() => setActiveTab('parser')}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 flex items-start space-x-2.5 ${
-                  activeTab === 'parser' 
-                    ? 'bg-slate-900 border-emerald-500/50 text-white shadow-lg' 
-                    : 'bg-slate-900/30 border-slate-805 hover:border-slate-705 text-slate-400'
+            <h2 className="text-[10.5px] font-bold text-slate-500 uppercase tracking-widest mb-3.5 font-mono text-left">Systems Core</h2>
+            <div className="space-y-1.5">
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "dashboard"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                <Code2 className={`mt-0.5 h-4 w-4 ${activeTab === 'parser' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                <div className="text-left">
-                  <div className="text-xs font-semibold font-mono">1. WSDL METADATA PARSER</div>
-                  <div className="text-[10px] mt-0.5 text-slate-400">Builds Jackson DTO records, @XmlRootElement Java POJOs and target RestControllers.</div>
-                </div>
+                <Activity className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Monitoring Console</span>
               </button>
 
-              <button 
-                id="btn-proxy-tab"
-                onClick={() => setActiveTab('proxy')}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 flex items-start space-x-2.5 ${
-                  activeTab === 'proxy' 
-                    ? 'bg-slate-900 border-emerald-500/50 text-white shadow-lg' 
-                    : 'bg-slate-900/30 border-slate-805 hover:border-slate-750 text-slate-400'
+              <button
+                onClick={() => {
+                  setActiveTab("bridges");
+                  fetchBridges();
+                }}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "bridges"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                <Lock className={`mt-0.5 h-4 w-4 ${activeTab === 'proxy' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                <div className="text-left">
-                  <div className="text-xs font-semibold font-mono">2. SPRING PROXY & INT</div>
-                  <div className="text-[10px] mt-0.5 text-slate-400">Verifies JWT scopes, marshals XML, parses downstream SOAP faults, logs to JPA H2.</div>
-                </div>
+                <Sliders className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>WSDL Schemas Parser</span>
               </button>
 
-              <button 
-                id="btn-agent-tab"
-                onClick={() => setActiveTab('agent')}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 flex items-start space-x-2.5 ${
-                  activeTab === 'agent' 
-                    ? 'bg-slate-900 border-emerald-500/50 text-white shadow-lg' 
-                    : 'bg-slate-900/30 border-slate-805 hover:border-slate-750 text-slate-400'
+              <button
+                onClick={() => {
+                  setActiveTab("mapping");
+                  fetchBridges();
+                }}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "mapping"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                <Terminal className={`mt-0.5 h-4 w-4 ${activeTab === 'agent' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                <div className="text-left">
-                  <div className="text-xs font-semibold font-mono">3. AGENT VALIDATION LOOP</div>
-                  <div className="text-[10px] mt-0.5 text-slate-400">Monitors failing XML namespace mappings & triggers reflective corrections in code.</div>
-                </div>
+                <Sparkles className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Dynamic AI Normalizer</span>
               </button>
 
-              <button 
-                id="btn-code-tab"
-                onClick={() => setActiveTab('codeViewer')}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-150 flex items-start space-x-2.5 ${
-                  activeTab === 'codeViewer' 
-                    ? 'bg-slate-900 border-emerald-500/50 text-white shadow-lg' 
-                    : 'bg-slate-900/30 border-slate-805 hover:border-slate-750 text-slate-400'
+              <button
+                onClick={() => {
+                  setActiveTab("playground");
+                  fetchBridges();
+                }}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "playground"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                <FileCode className={`mt-0.5 h-4 w-4 ${activeTab === 'codeViewer' ? 'text-emerald-400' : 'text-slate-500'}`} />
-                <div className="text-left">
-                  <div className="text-xs font-semibold font-mono">4. SPRING SOURCE TREE CODE</div>
-                  <div className="text-[10px] mt-0.5 text-slate-400">Inspect full generated Java Spring controllers, mappers, and security chains.</div>
-                </div>
+                <Send className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Sandbox Playground</span>
               </button>
             </div>
           </div>
 
-          <div className="border-t border-slate-850 pt-4 space-y-3">
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Spring Code & Prompts</h2>
-            <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-blue-400" /> PROMPT_LOG.md</span>
-                <span className="text-[9px] text-emerald-400 font-mono">Active</span>
-              </div>
-              <p className="text-[10px] text-slate-400">Contains comprehensive prompt directions for producing secure Spring mappers.</p>
-              <button 
-                onClick={() => handleCopy(PROMPT_LOG_MD)}
-                className="w-full text-center bg-slate-800 hover:bg-slate-750 text-[10px] text-slate-350 py-1 rounded border border-slate-700 transition flex items-center justify-center gap-1"
+          <div className="pt-4 border-t border-slate-900">
+            <h2 className="text-[10.5px] font-bold text-slate-500 uppercase tracking-widest mb-3.5 font-mono text-left">Credentials & Exports</h2>
+            <div className="space-y-1.5 font-mono">
+              <button
+                onClick={() => {
+                  setActiveTab("keys");
+                  fetchApiKeys();
+                }}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "keys"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
+                }`}
               >
-                {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                {copied ? "Copied Java Prompt" : "Copy Java Prompts Log"}
+                <Key className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Modern API Keys</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("java")}
+                className={`w-full p-2.5 rounded-lg border transition-all duration-155 flex items-center space-x-3 text-xs ${
+                  activeTab === "java"
+                    ? "bg-slate-900 border-emerald-500/30 text-white font-bold"
+                    : "bg-slate-900/30 border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <FileCode className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>Java Source Code</span>
               </button>
             </div>
           </div>
 
-          {/* DOCUMENTATION HELP */}
-          <div className="flex-1 flex flex-col justify-end">
-            <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-850 text-xs space-y-2">
-              <div className="flex items-center space-x-1.5 text-slate-200 font-semibold font-mono">
-                <HelpCircle className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Spring Bridge Specs</span>
+          {/* Prompt Log card helper */}
+          <div className="flex-1 flex flex-col justify-end text-left">
+            <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-900 space-y-2.5">
+              <div className="flex items-center space-x-2 text-slate-200 font-mono font-bold text-xs">
+                <BookOpen className="h-4 w-4 text-emerald-400" />
+                <span>Enterprise Core specs</span>
               </div>
-              <p className="text-[10.5px] text-slate-450 leading-relaxed">
-                This environment provides real-time proxy simulation, XML parsing, Spring Security credentials validation, and JAXB class generation.
+              <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
+                Dynamic pipeline operates by mapping client REST endpoints recursively into JAXB styled XML structures, invoking mock services on standard port 3000, and stripping namespace elements dynamically.
               </p>
+              <button
+                onClick={() => handleCopy(PROMPT_LOG_MD)}
+                className="w-full text-center bg-slate-950 border border-slate-850 hover:bg-slate-900 transition-all text-[10px] py-2 font-mono text-slate-350 rounded flex items-center justify-center gap-1.5 hover:text-white"
+              >
+                <Copy className="h-3 w-3" /> Copy Prompt specs
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* CENTER INTERACTIVE COMPONENT - MAIN WORKSPACE */}
-        <main className="lg:col-span-9 p-6 flex flex-col space-y-6 overflow-y-auto">
+        {/* DETAILS CORE WORKSPACE */}
+        <main className="flex-1 p-6 overflow-y-auto space-y-6 text-left">
           
-          {/* TABS 1: SCHEMA PARSER */}
-          {activeTab === 'parser' && (
-            <div className="space-y-6">
+          {/* TAB 1: OPERATIONAL MONITORING CONSOLE */}
+          {activeTab === "dashboard" && (
+            <div className="space-y-6 animate-fade-in">
               
-              {/* COMPONENT INTRO */}
-              <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h3 className="text-base font-semibold text-white font-mono flex items-center gap-2">
-                    <Code2 className="text-emerald-400 h-5 w-5" />
-                    Java WSDL Schema Translation Module
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Direct JVM translation component. Parses legacy namespaces, schema types, and operations to generate Spring validation POJO classes and `@RestController` configurations.
-                  </p>
+              {/* TOP CARDS COUNTER ROW */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Bridges Configured</div>
+                  <div className="text-2xl font-bold font-mono text-white">{analyticsOverview.totalBridges}</div>
                 </div>
-                <div className="flex items-center space-x-2 shrink-0">
-                  <span className="text-xs text-slate-400 font-semibold">Active WSDL:</span>
-                  <select 
-                    value={selectedTemplate.id} 
-                    onChange={(e) => {
-                      const t = TEMPLATES.find(x => x.id === e.target.value);
-                      if (t) setSelectedTemplate(t);
-                    }}
-                    className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-100 outline-none focus:border-slate-700"
-                  >
-                    {TEMPLATES.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </select>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Active Endpoints</div>
+                  <div className="text-2xl font-bold font-mono text-emerald-400">{analyticsOverview.activeEndpoints}</div>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Total API Requests (Today)</div>
+                  <div className="text-2xl font-bold font-mono text-blue-400">{analyticsOverview.requestsToday}</div>
+                </div>
+
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-850 shadow-inner space-y-1 animate-pulse">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-mono">Dynamic Error Rate</div>
+                  <div className="text-2xl font-bold font-mono text-rose-400">{analyticsOverview.errorRate}%</div>
                 </div>
               </div>
 
-              {/* SPLIT WSDL VIEW vs PARSER ACTION */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* CHART & HISTORIC TRACE GRID */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* WSDL INPUT PANEL */}
-                <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col h-[525px]">
-                  <div className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-3 flex justify-between items-center shrink-0">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-350 font-mono">Input Heritage XML WSDL</span>
-                    <button 
-                      onClick={() => handleCopy(xmlInput)}
-                      className="text-xs text-slate-450 hover:text-white flex items-center gap-1 font-mono"
-                    >
-                      <Copy className="h-3 w-3" /> Copy Spec
-                    </button>
+                {/* TIMERS SERIES TIMESERIES LINE CHART */}
+                <div className="lg:col-span-8 bg-slate-900 rounded-xl border border-slate-850 p-5 flex flex-col h-[380px]">
+                  <div className="flex justify-between items-center mb-4 shrink-0">
+                    <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350">Dynamic modernised events flow</span>
+                    <div className="bg-slate-950 p-1 flex rounded-md border border-slate-800 text-[10px] font-mono">
+                      {["24h", "7d", "30d"].map(r => (
+                        <button
+                          key={r}
+                          onClick={() => setActiveRange(r)}
+                          className={`px-2.5 py-1 rounded transition-all cursor-pointer ${
+                            activeRange === r ? "bg-slate-900 text-emerald-400 font-bold" : "text-slate-550 hover:text-slate-300"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <textarea
-                    value={xmlInput}
-                    onChange={(e) => setXmlInput(e.target.value)}
-                    className="flex-1 p-4 bg-slate-950 text-emerald-400 font-mono text-[11px] leading-relaxed resize-none outline-none focus:bg-slate-960 border-0"
-                  />
-                  <div className="bg-slate-910/70 p-3.5 border-t border-slate-850 shrink-0 flex justify-end">
-                    <button 
-                      onClick={handleParseSchema}
-                      disabled={isParsing}
-                      className="bg-emerald-600 hover:bg-emerald-500 font-medium text-xs px-4 py-2.5 rounded text-white flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer"
-                    >
-                      {isParsing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                      <span>{isParsing ? 'Extracting Fields & POJOs...' : 'Execute JVM Parser'}</span>
-                    </button>
+
+                  <div className="flex-1 w-full text-xs">
+                    {analyticsTimeseries.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-slate-500 font-mono">Awaiting core pipeline requests events logs...</div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={analyticsTimeseries}>
+                          <defs>
+                            <linearGradient id="gradientRequests" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="gradientErrors" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.15}/>
+                              <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b"/>
+                          <XAxis dataKey="timestamp" stroke="#64748b" />
+                          <YAxis stroke="#64748b" />
+                          <Tooltip contentStyle={{ backgroundColor: "#020617", border: "1px solid #1e293b", borderRadius: "8px", fontFamily: "monospace" }} />
+                          <Area type="monotone" dataKey="count" name="Normalized REST calls" stroke="#10b981" fillOpacity={1} fill="url(#gradientRequests)" strokeWidth={2} />
+                          <Area type="monotone" dataKey="errors" name="SOAP Fault exception redirects" stroke="#f43f5e" fillOpacity={1} fill="url(#gradientErrors)" strokeWidth={1.5} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 </div>
 
-                {/* TARGET PARSED SCHEMAS OUTPUT */}
-                <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col h-[525px]">
-                  <div className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-3 shrink-0">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-350 font-mono flex items-center gap-1.5">
-                      <Braces className="h-4 w-4 text-emerald-400" /> Compiled Java DTOs / Records
-                    </span>
-                  </div>
-
-                  <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                    {!parserOutput ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-850 border border-slate-800 flex items-center justify-center text-slate-400 text-lg">?</div>
-                        <div>
-                          <p className="text-xs font-semibold text-slate-300 animate-pulse">No parsed entities metadata generated</p>
-                          <p className="text-[11px] text-slate-400 mt-1 max-w-[280px]">Press <strong>"Execute JVM Parser"</strong> to generate the Spring java source files.</p>
-                        </div>
-                      </div>
+                {/* ENDPOINTS EVENT BAR DISTRIBUTION */}
+                <div className="lg:col-span-4 bg-slate-900 rounded-xl border border-slate-850 p-5 flex flex-col h-[380px]">
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350 mb-4 block text-left">Modern APIs load</span>
+                  <div className="flex-1 w-full text-xs">
+                    {analyticsByEndpoint.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-slate-550 font-mono text-center">No transactions mapped by endpoints yet.</div>
                     ) : (
-                      <div className="space-y-4 text-xs font-mono animate-fade-in text-left">
-                        <div className="bg-slate-950/80 p-3.5 rounded border border-slate-850 space-y-1.5">
-                          <div><span className="text-slate-500 font-semibold">Legacy WSDL Context:</span> <span className="text-emerald-400 font-bold">{parserOutput.serviceName}</span></div>
-                          <div><span className="text-slate-500 font-semibold">Heritage Namespace:</span> <span className="text-blue-400">{parserOutput.targetNamespace}</span></div>
-                        </div>
-
-                        {parserOutput.operations.map((op: any, index: number) => (
-                          <div key={index} className="space-y-3">
-                            <div className="border border-slate-800 rounded bg-slate-950">
-                              <div className="bg-slate-900 border-b border-slate-800 px-3 py-2 flex items-center justify-between text-[10.5px]">
-                                <span className="bg-emerald-500/15 text-emerald-400 py-0.5 px-2 rounded border border-emerald-400/25 font-bold">POST to REST</span>
-                                <span className="text-slate-400">Secure Path: <span className="text-blue-450 font-semibold">{op.restPath}</span></span>
-                              </div>
-                              <div className="p-3 bg-slate-900/30 border-b border-slate-850 text-[11px] space-y-1">
-                                <div><span className="text-slate-500">Operation:</span> <span className="text-white">{op.name}</span></div>
-                                <div><span className="text-slate-500">Validation Authority:</span> <span className="text-amber-400 font-semibold">@PreAuthorize("hasRole('{op.requiredRole || 'ROLE_USER'}')")</span></div>
-                                <div><span className="text-slate-500">XML Tag Mapping:</span> <span className="text-white">&lt;{op.legacyXmlRoot}&gt;</span></div>
-                              </div>
-                              <div className="p-3 bg-slate-950">
-                                <div className="text-[10px] text-slate-500 mb-2 font-mono flex justify-between">
-                                  <span>// Generated Java Records (Jackson DTOs)</span>
-                                  <button onClick={() => handleCopy(op.javaModel)} className="hover:text-white flex items-center gap-0.5"><Copy className="h-3 w-3" /> Copy</button>
-                                </div>
-                                <pre className="text-slate-200 text-[10.5px] border border-slate-900 bg-slate-950/70 p-3 rounded overflow-auto leading-relaxed">
-                                  {op.javaModel}
-                                </pre>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={analyticsByEndpoint} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b"/>
+                          <XAxis type="number" stroke="#64748b" />
+                          <YAxis dataKey="operationName" type="category" stroke="#64748b" width={80} />
+                          <Tooltip contentStyle={{ backgroundColor: "#020617", border: "1px solid #1e293b", borderRadius: "8px" }} />
+                          <Bar dataKey="count" name="Calls" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                            {analyticsByEndpoint.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "#10b981" : "#3b82f6"} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     )}
                   </div>
                 </div>
 
               </div>
 
-            </div>
-          )}
+              {/* REAL-TIME AUDITING TRACE LOGS CONSOLE */}
+              <div className="bg-slate-900 rounded-xl border border-slate-850 p-5 flex flex-col text-left">
+                <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-850">
+                  <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350 flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-emerald-400" /> Operational transaction auditing trace table
+                  </span>
+                  <button
+                    onClick={fetchAnalytics}
+                    className="text-slate-400 hover:text-white transition flex items-center gap-1.5 text-xs font-mono"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" /> Refresh audit trace
+                  </button>
+                </div>
 
-          {/* TAB 2: SPRING PROXY CONFIG & AUTHENTICATION */}
-          {activeTab === 'proxy' && (
-            <div className="space-y-6">
-              
-              {/* COMPONENT INTRO */}
-              <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h3 className="text-base font-semibold text-white font-mono flex items-center gap-2">
-                    <Lock className="text-emerald-400 h-5 w-5" />
-                    Spring Security Gateway & SOAP Bridge
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Verifies JWT tokens and verifies scopes. Translates incoming JSON into XML envelopes, captures Downstream SOAP Fault exceptions, and registers logs onto an H2/SQLITE enterprise trace table.
-                  </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs font-mono text-slate-300">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-[10.5px] text-slate-500 uppercase tracking-widest">
+                        <th className="pb-3 text-left">Timestamp</th>
+                        <th className="pb-3 text-left">Integration bridge</th>
+                        <th className="pb-3 text-left">HTTP method</th>
+                        <th className="pb-3 text-left">Proxy target path</th>
+                        <th className="pb-3 text-left">Execution latency</th>
+                        <th className="pb-3 text-left">HTTP status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-850/40">
+                      {logsLoading ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-slate-500">
+                            <Loader2 className="h-4 w-4 animate-spin text-emerald-400 mx-auto" />
+                          </td>
+                        </tr>
+                      ) : LOGS_COUNT === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-slate-500">No transactions recorded in secure SQLite audit database yet. Make some proxy requests!</td>
+                        </tr>
+                      ) : (
+                        requestLogs.map(log => (
+                          <tr key={log.id} className="hover:bg-slate-950/20">
+                            <td className="py-2.5 text-slate-500">{new Date(log.createdAt).toLocaleTimeString()}</td>
+                            <td className="py-2.5 text-slate-200 font-sans font-semibold">{log.bridge?.name}</td>
+                            <td className="py-2.5">
+                              <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                                log.method === "POST" ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"
+                              }`}>{log.method}</span>
+                            </td>
+                            <td className="py-2.5 text-slate-450">{log.path}</td>
+                            <td className="py-2.5 text-slate-450 font-bold">{log.latencyMs}ms</td>
+                            <td className="py-2.5">
+                              <span className={`font-bold ${log.statusCode >= 400 ? "text-rose-450" : "text-emerald-400"}`}>
+                                {log.statusCode}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              {/* INTERACTIVE PROXY PIPELINE TESTER */}
+            </div>
+          )}
+
+          {/* TAB 2: WSDL SCHEMAS PARSER ACTIONS */}
+          {activeTab === "bridges" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              
+              {/* SPLIT WSDL COMPILER INPUT PANEL VS RECORD MAP LIST */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
-                {/* REST INPUT PAYLOAD */}
-                <div className="lg:col-span-5 flex flex-col space-y-4">
-                  
-                  {/* AUTHENTICATION TOKEN INJECTOR PANEL */}
-                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 text-xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1.5 text-slate-200 font-mono font-bold">
-                        <Lock className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>HTTP Security Header Config</span>
-                      </div>
-                      <label className="flex items-center space-x-1 cursor-pointer text-slate-400">
-                        <input 
-                          type="checkbox" 
-                          checked={hasRoleValidate} 
-                          onChange={(e) => setHasRoleValidate(e.target.checked)} 
-                          className="mr-1 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0"
+                {/* REGISTER NEW BRIDGE FORM */}
+                <div className="lg:col-span-7 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold tracking-tight text-white uppercase tracking-widest font-mono">Modernise new Heritage service</h3>
+                    <button
+                      onClick={handleSeedSandboxTemplate}
+                      className="bg-slate-950 hover:bg-slate-850 px-3 py-1.5 rounded-lg border border-slate-800 text-[10px] text-emerald-400 font-mono transition flex items-center gap-1 cursor-pointer font-bold"
+                    >
+                      <Sparkles className="h-3 w-3" /> Load Sandbox Spec
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCreateBridgeSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5 font-mono text-xs">
+                        <label className="text-[10.5px] font-semibold text-slate-500 tracking-wider">BRIDGE SERVICE NAME</label>
+                        <input
+                          type="text"
+                          required
+                          value={newBridgeName}
+                          onChange={(e) => setNewBridgeName(e.target.value)}
+                          placeholder="e.g. Card Authorization portal"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-slate-700"
                         />
-                        <span>Enforce JWT check</span>
-                      </label>
+                      </div>
+
+                      <div className="space-y-1.5 font-mono text-xs">
+                        <label className="text-[10.5px] font-semibold text-slate-500 tracking-wider">WSDL DESCRIPTOR SPEC URL (OPTIONAL)</label>
+                        <input
+                          type="text"
+                          value={newWsdlUrl}
+                          onChange={(e) => setNewWsdlUrl(e.target.value)}
+                          placeholder="http://banking.internal/ws/Authorize?wsdl"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-slate-700"
+                        />
+                      </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-slate-400">
-                        <span>Header: <code className="text-slate-350">Authorization:</code></span>
-                        <div className="space-x-1.5">
-                          <button 
-                            onClick={() => setClientTokenKey("Bearer-JWT-legacy-token-xyz556")} 
-                            className="text-emerald-400 underline hover:text-emerald-300"
-                          >
-                            Set Valid (ROLE_USER)
-                          </button>
-                          <button 
-                            onClick={() => setClientTokenKey("Bearer-JWT-payment-admin-key112")} 
-                            className="text-blue-400 underline hover:text-blue-300"
-                          >
-                            Set Valid (PAYMENT_ADMIN)
-                          </button>
-                          <button 
-                            onClick={() => setClientTokenKey("")} 
-                            className="text-rose-400 underline hover:text-rose-300"
-                          >
-                            Clear (Fault 401)
-                          </button>
-                        </div>
-                      </div>
-                      <input 
+                    <div className="space-y-1.5 font-mono text-xs">
+                      <label className="text-[10.5px] font-semibold text-slate-500 tracking-wider">EXPLANATIONAL DESCRIPTION</label>
+                      <input
                         type="text"
-                        value={clientTokenKey}
-                        onChange={(e) => setClientTokenKey(e.target.value)}
-                        placeholder="e.g. Bearer JWT-Token-Value..."
-                        className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs font-mono text-slate-100 outline-none focus:border-slate-700"
+                        value={newBridgeDesc}
+                        onChange={(e) => setNewBridgeDesc(e.target.value)}
+                        placeholder="Modern endpoint proxies interface accessing secure traditional accounts services."
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-slate-700"
                       />
                     </div>
-                  </div>
 
-                  <div className="bg-slate-900 rounded-xl border border-slate-805 overflow-hidden flex flex-col h-[400px]">
-                    <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
-                      <span className="text-xs font-semibold text-slate-300 font-mono">Incoming Client REST JSON</span>
-                      <span className="text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-slate-400 font-mono">JSON Body</span>
+                    {/* Quick Preset selection templates mapping */}
+                    <div className="flex items-center space-x-2 text-[10px] text-slate-500 font-mono pt-1">
+                      <span>Presets:</span>
+                      <button type="button" onClick={() => selectTemplateAndLoad("payment-service")} className="hover:text-emerald-400 underline">Payment Auth WSDL</button>
+                      <span>|</span>
+                      <button type="button" onClick={() => selectTemplateAndLoad("customer-service")} className="hover:text-emerald-400 underline">Customer data SOAP</button>
                     </div>
 
-                    <div className="flex px-4 py-1.5 text-[10px] text-slate-500 items-center justify-between border-b border-slate-800/40 bg-slate-950/30 shrink-0">
-                      <span>JSON Presets:</span>
-                      <div className="space-x-2 font-mono">
-                        <button 
-                          onClick={() => setTestRestPayload(selectedTemplate.id === 'user-service' 
-                            ? '{\n  "userId": 105,\n  "authToken": "Bearer-JWT-legacy-token-xyz556"\n}'
-                            : '{\n  "merchantId": "MERCH_881",\n  "amount": 250.00,\n  "currencyCode": "USD",\n  "cardDetails": {\n    "cardNumber": "4111222233334444",\n    "expiryDate": "12/28",\n    "cvv": "123"\n  }\n}'
-                          )}
-                          className="hover:text-emerald-400 underline cursor-pointer"
-                        >
-                          Send Valid payload
-                        </button>
-                        <button 
-                          onClick={() => setTestRestPayload(selectedTemplate.id === 'user-service'
-                            ? '{\n  "userId": 999,\n  "authToken": "Bearer-JWT-expired-token"\n}'
-                            : '{\n  "merchantId": "MERCH_881",\n  "amount": -10.00,\n  "currencyCode": "USD"\n}'
-                          )}
-                          className="hover:text-rose-450 underline cursor-pointer"
-                        >
-                          Send SOAP Error Trigger
-                        </button>
-                      </div>
+                    <div className="space-y-1.5 font-mono text-xs flex-1 flex flex-col min-h-[220px]">
+                      <label className="text-[10.5px] font-semibold text-slate-500 tracking-wider">HERITAGE XML WSDL CONTENT DEFINITION</label>
+                      <textarea
+                        required
+                        value={newWsdlContent}
+                        onChange={(e) => setNewWsdlContent(e.target.value)}
+                        placeholder="Paste standard WSDL schema content here..."
+                        className="flex-1 w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-[10.5px] text-emerald-400 font-mono leading-relaxed resize-none outline-none focus:border-slate-700 h-[220px]"
+                      />
                     </div>
 
-                    <textarea
-                      value={testRestPayload}
-                      onChange={(e) => setTestRestPayload(e.target.value)}
-                      className="flex-1 p-4 bg-slate-950 text-white font-mono text-xs leading-relaxed resize-none outline-none focus:bg-slate-960 border-0"
-                    />
-
-                    {/* SOAP MAPPERS CONTROL */}
-                    <div className="bg-slate-900 border-t border-slate-800 p-3 shrink-0 flex items-center justify-between">
-                      <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={faultMappersActive} 
-                          onChange={(e) => setFaultMappersActive(e.target.checked)}
-                          className="rounded text-emerald-600 bg-slate-950 border-slate-800 h-3.5 w-3.5"
-                        />
-                        <span>Enable @RestControllerAdvice Mappers</span>
-                      </label>
-                      <button 
-                        onClick={handleProxyTest}
-                        disabled={isProxying}
-                        className="bg-emerald-600 hover:bg-emerald-500 font-semibold text-xs px-4 py-2 rounded text-white flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
+                    <div className="flex justify-end pt-3">
+                      <button
+                        id="btn-bridge-create"
+                        type="submit"
+                        disabled={isCreatingBridge}
+                        className="bg-emerald-600 hover:bg-emerald-500 font-semibold text-white px-5 py-2.5 rounded-lg text-xs flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer shadow-lg"
                       >
-                        {isProxying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3 w-3" />}
-                        <span>Translate REST Call</span>
+                        {isCreatingBridge ? <Loader2 className="h-4 w-4 animate-spin text-slate-300" /> : <Play className="h-4.5 w-4.5" />}
+                        <span>Compile & Registers Bridge endpoints</span>
                       </button>
                     </div>
-                  </div>
+                  </form>
                 </div>
 
-                {/* RUNTIME PIEPLINE LOGS */}
-                <div className="lg:col-span-7 flex flex-col space-y-4 text-left">
-                  <div className="bg-slate-900 rounded-xl border border-slate-805 overflow-hidden flex flex-col h-[540px]">
-                    <div className="bg-slate-905 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0">
-                      <span className="text-xs font-semibold text-slate-350 font-mono">Simulated Spring Boot 3 Engine Logs & Pipe Trace</span>
-                      <span className="text-[10px] bg-slate-850 text-slate-300 px-2 py-0.5 rounded border border-slate-800">Spring Security Gate</span>
-                    </div>
-
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4 font-mono text-[11px] leading-relaxed">
-                      {!proxyResult ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-                          <div className="h-10 w-10 rounded-full bg-slate-850 border border-slate-800 flex items-center justify-center text-slate-400">⚡</div>
-                          <div>
-                            <p className="text-xs font-semibold text-slate-300">Awaiting Conversion Call</p>
-                            <p className="text-[11px] text-slate-450 mt-1 max-w-[340px]">Configure your Authorization token, modify the JSON input parameters, and trigger <strong>"Translate REST Call"</strong> to log mappings.</p>
-                          </div>
-                        </div>
-                      ) : proxyResult.errorType ? (
-                        /* SPRING SECURITY BLOCKED RESPONSE HOOK */
-                        <div className="space-y-4">
-                          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-300 p-4 rounded-lg space-y-2">
-                            <div className="flex items-center gap-2">
-                              <ShieldAlert className="h-5 w-5 text-rose-400 shrink-0" />
-                              <div className="font-bold text-sm">Spring Security Context Authentication Failure</div>
-                            </div>
-                            <p className="text-xs">{proxyResult.message}</p>
-                            <div className="text-[10px] bg-rose-500/15 p-2 rounded border border-rose-500/25 font-mono text-rose-200">
-                              Error Type: {proxyResult.errorType} | HTTP Status Code: {proxyResult.status} Unauthorized
-                            </div>
-                          </div>
-                          
-                          <div className="bg-slate-950 p-3.5 border border-slate-850 rounded text-[11px] text-slate-300 space-y-2">
-                            <span className="text-slate-400 font-bold">Interception Trace (SecurityFilterChain):</span>
-                            <pre className="text-slate-450 text-[10px]">
-{`[DEBUG] SecurityContextHolder - No SecurityContext available, creating brand new authentication state
-[WARN] JwtAuthenticationFilter - Token check failed. Throwing AuthenticationException for proxy path
-[DEBUG] ExceptionTranslationFilter - Delegating AuthenticationException to custom AuthenticationEntryPoint
-[INFO] AuthenticationEntryPoint - Returning JSON authorization error payload with HTTP Status Code 401`}
-                            </pre>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          
-                          {/* STAGE 1: INCOMING */}
-                          <div className="border border-slate-800 rounded bg-slate-950 p-3 space-y-1">
-                            <div className="flex items-center justify-between text-[10px] text-slate-450 border-b border-slate-850 pb-1.5 mb-1.5 font-sans">
-                              <span className="font-bold text-slate-300">1. Jackson Validated REST Data Layer DTO</span>
-                              <span className="text-emerald-400">Validated with @NotNull</span>
-                            </div>
-                            <pre className="text-slate-300 overflow-auto text-[10.5px] max-h-[90px]">{JSON.stringify(proxyResult.restInput, null, 2)}</pre>
-                          </div>
-
-                          {/* STAGE 2: OUTGOING SOAP ENVELOPE */}
-                          <div className="border border-slate-850 rounded bg-slate-950 p-3 space-y-1">
-                            <div className="flex items-center justify-between text-[10px] text-slate-450 border-b border-slate-850 pb-1.5 mb-1.5 font-sans">
-                              <span className="font-semibold text-blue-400">2. JAXB Marshaller marshalled JAXBElement package to Legacy SOAP XML</span>
-                              <span>TargetNamespace Sync</span>
-                            </div>
-                            <pre className="text-emerald-400 overflow-auto text-[10px] max-h-[140px] leading-relaxed">{proxyResult.outgoingSoapXml}</pre>
-                          </div>
-
-                          {/* STAGE 3: RAW SOAP RESPONSE */}
-                          <div className="border border-slate-850 rounded bg-slate-950 p-3 space-y-1">
-                            <div className="flex items-center justify-between text-[10px] text-slate-450 border-b border-slate-850 pb-1.5 mb-1.5 font-sans">
-                              <span className="font-semibold text-amber-500">3. Outbound SOAP Endpoint SOAP Response (Unmarshalled XML block)</span>
-                              <span>Heritage Soap Service Client</span>
-                            </div>
-                            <pre className="text-slate-450 overflow-auto text-[10px] max-h-[140px] leading-relaxed">{proxyResult.legacySoapResponseXml}</pre>
-                          </div>
-
-                          {/* STAGE 4: REST JSON OUTPUT */}
-                          <div className={`border rounded bg-slate-950 p-3 space-y-1 ${proxyResult.legacySoapResponseXml.includes('Fault') ? 'border-amber-500/20' : 'border-emerald-500/20'}`}>
-                            <div className="flex items-center justify-between text-[10px] border-b border-slate-850 pb-1.5 mb-1.5 font-sans">
-                              <span className="font-semibold text-white">4. REST Controller ResponseEntity Returned payload JSON</span>
-                              <span className={proxyResult.legacySoapResponseXml.includes('Fault') ? 'text-amber-400' : 'text-emerald-400 font-bold'}>
-                                {proxyResult.legacySoapResponseXml.includes('Fault') ? 'SOAPFault @RestControllerAdvice Handled' : 'HTTP/1.1 200 OK'}
-                              </span>
-                            </div>
-                            <pre className="text-slate-350 overflow-auto text-[10.5px] max-h-[180px] leading-relaxed">{proxyResult.restJsonOutput}</pre>
-                          </div>
-
-                          {/* JPA PERSISTED ENTRY */}
-                          <div className="bg-slate-950/40 p-3.5 border border-slate-850 rounded text-[10px] text-slate-400 flex items-start gap-4 font-sans">
-                            <Database className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-                            <div className="space-y-1.5 flex-1 font-mono">
-                              <div><strong className="text-slate-200 uppercase tracking-widest text-[9.5px]">Entity auditing:</strong> JpaRepository context mapping logs</div>
-                              <pre className="bg-slate-950 p-2 border border-slate-900 rounded text-[10px] text-slate-350 leading-relaxed overflow-auto max-h-[140px]">{proxyResult.jpaLog.query}</pre>
-                              <div className="text-emerald-400 font-bold">&#10003; JPA database audit session committed successfully to active database context.</div>
-                            </div>
-                          </div>
-
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-          {/* TAB 3: AGENTIC TEST & HEAL LOOP */}
-          {activeTab === 'agent' && (
-            <div className="space-y-6">
-              
-              {/* COMPONENT INTRO */}
-              <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800">
-                <h3 className="text-base font-semibold text-white font-mono flex items-center gap-2">
-                  <Terminal className="text-emerald-400 h-5 w-5" />
-                  JVM Agent validation & Custom Self-Heal Compiler
-                </h3>
-                <p className="text-xs text-slate-450 mt-1 leading-relaxed">
-                  Every runtime modernizer features an agentic verification loop: (1) Generates JAXB classes and JUnit mappers &larr;&rarr; (2) Compiles source bytecode using JDK tools &larr;&rarr; (3) Executes JUnit assertions to match namespaces &larr;&rarr; If it fails, JAXB namespaces errors are looped back to heal JAXB annotation mappings.
-                </p>
-              </div>
-
-              {/* ACTION ROW */}
-              <div className="flex justify-between items-center bg-slate-900 px-6 py-4 rounded-xl border border-slate-850 gap-4">
-                <div className="text-xs text-slate-400">
-                  <span className="font-bold text-white">Mock Suite Active:</span> Runs 5 JUnit integration assertions verify XML entities namespaces matching standards.
-                </div>
-                <button 
-                  onClick={startAgentLoop}
-                  disabled={isAgentRunning}
-                  className="bg-emerald-600 hover:bg-emerald-500 font-semibold text-xs px-5 py-2.5 rounded text-white flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer shrink-0 shadow-lg"
-                >
-                  {isAgentRunning ? <RotateCw className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                  <span>{isAgentRunning ? 'Self-Healing JVM Compile Loop Running...' : 'Trigger JVM Self-Heal Loop'}</span>
-                </button>
-              </div>
-
-              {/* SPLIT LIVE LOOPS vs RECONCILIATION */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                
-                {/* AGENT LOG PANEL */}
-                <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col h-[480px]">
-                  <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
-                    <span className="text-xs font-semibold text-slate-350 font-mono flex items-center gap-2">
-                      <Terminal className="h-4 w-4 text-emerald-400" /> Live Agent System Compiler Console
-                    </span>
-                    {isAgentRunning && <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/35 text-emerald-400 px-2 py-0.5 rounded animate-pulse">Running JVM Compiler</span>}
-                  </div>
-
-                  <div className="flex-1 p-4 overflow-y-auto space-y-2 bg-slate-950/70 font-mono text-[11px] leading-relaxed">
-                    {agentLogs.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-                        <div className="h-10 w-10 rounded-full border border-slate-800 flex items-center justify-center text-slate-400">!</div>
-                        <p className="text-xs">Console is empty. Hit the button above to begin verification.</p>
-                      </div>
+                {/* CURRENT ACTIVE BRIDGES REGISTERED */}
+                <div className="lg:col-span-5 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col space-y-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white uppercase tracking-widest font-mono text-left">Active modernised bridge points</h3>
+                  
+                  <div className="flex-1 overflow-y-auto space-y-3.5 max-h-[480px]">
+                    {bridgesLoading ? (
+                      <div className="py-12 text-center"><Loader2 className="h-5 w-5 animate-spin mx-auto text-emerald-400" /></div>
+                    ) : bridges.length === 0 ? (
+                      <div className="py-12 text-center text-slate-550 text-xs font-mono">No active integration bridges configured. Upload a WSDL above to trigger unmarshal configurations.</div>
                     ) : (
-                      agentLogs.map((log, i) => (
-                        <div key={i} className="flex items-start space-x-2.5 py-1 border-b border-slate-900/35">
-                          <span className="text-slate-550 shrink-0 text-[10px]">{log.timestamp}</span>
-                          <div>
-                            {log.type === 'success' && <span className="text-emerald-400 font-bold">[PASSED] </span>}
-                            {log.type === 'warning' && <span className="text-yellow-450 font-bold">[WARN] </span>}
-                            {log.type === 'error' && <span className="text-rose-450 font-bold">[JVM ERROR] </span>}
-                            {log.type === 'info' && <span className="text-blue-400 font-bold">[SYSTEM] </span>}
-                            <span className="text-slate-200">{log.message}</span>
+                      bridges.map(br => (
+                        <div key={br.id} className="bg-slate-950 p-4 rounded-xl border border-slate-950 space-y-3 text-left">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                                <Sliders className="h-3.5 w-3.5 text-emerald-400" />
+                                {br.name}
+                              </h4>
+                              <p className="text-[10px] text-slate-450 mt-1 line-clamp-2">{br.description}</p>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleToggleBridgeStatus(br)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-all cursor-pointer font-bold ${
+                                  br.status === "ACTIVE"
+                                    ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+                                    : "bg-slate-900 border-slate-800 text-slate-500"
+                                }`}
+                              >
+                                {br.status}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBridge(br.id)}
+                                className="p-1 text-slate-500 hover:text-rose-400 rounded transition cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-slate-500 border-t border-slate-900 pt-2.5">
+                            <div>SOAP Endpoint: <span className="text-slate-350 truncate block mt-0.5">{br.soapEndpoint}</span></div>
+                            <div>Namespace URI: <span className="text-slate-350 truncate block mt-0.5">{br.namespace}</span></div>
+                          </div>
+
+                          {br.operations && br.operations.length > 0 && (
+                            <div className="pt-2 border-t border-slate-900/60 flex items-center justify-between text-[10px] font-mono bg-slate-900/40 p-2 rounded">
+                              <span className="text-slate-500">Configured REST Endpoints:</span>
+                              <button
+                                onClick={() => {
+                                  setSelectedBridge(br);
+                                  setSelectedOp(br.operations[0]);
+                                  setActiveTab("mapping");
+                                }}
+                                className="text-emerald-400 font-bold hover:underline"
+                              >
+                                Manage {br.operations.length} path mappings &rarr;
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))
                     )}
                   </div>
                 </div>
 
-                {/* SELF-HEALING ARCHITECTURAL FLOW VISUALIZER */}
-                <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden p-6 space-y-4">
-                  <h4 className="text-xs font-semibold uppercase text-slate-400 tracking-wider font-mono">Agentic Test Suite Verification Flow</h4>
-                  
-                  <div className="space-y-4">
-                    {/* STEP 1: PARSE & COMPILE */}
-                    <div className={`p-3.5 rounded-lg border transition-all duration-300 flex items-start space-x-3 ${
-                      agentStep >= 1 ? 'bg-slate-950 border-emerald-500/30' : 'bg-slate-900/30 border-slate-850 text-slate-500'
-                    }`}>
-                      <CheckCircle className={`h-4.5 w-4.5 shrink-0 mt-0.5 ${agentStep >= 3 ? 'text-emerald-400' : 'text-slate-600'}`} />
-                      <div>
-                        <div className="text-xs font-bold text-slate-100 font-mono">JAXB POJOs Mapping Compilation</div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Automated translation of legacy WSDL parameters. Compiles JAXB schema records classes using `javac` compiler tools.</p>
-                      </div>
-                    </div>
-
-                    {/* STEP 2: TEST MATRIX */}
-                    <div className={`p-3.5 rounded-lg border transition-all duration-300 flex items-start space-x-3 ${
-                      agentStep >= 4 ? 'bg-slate-950 border-emerald-500/30' : 'bg-slate-900/30 border-slate-850 text-slate-500'
-                    }`}>
-                      <CheckCircle className={`h-4.5 w-4.5 shrink-0 mt-0.5 ${agentStep >= 8 ? 'text-emerald-400' : (agentStep >= 5 ? 'text-yellow-400' : 'text-slate-600')}`} />
-                      <div>
-                        <div className="text-xs font-bold text-slate-100 font-mono">Execute JUnit mapping assertions suite</div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Compares converted outbound XML mappers streams with source legacy specifications. Catches discrepancies in tags, structural types or namespace scopes.</p>
-                      </div>
-                    </div>
-
-                    {/* STEP 3: EXCEPTION CATCHER */}
-                    <div className={`p-3.5 rounded-lg border transition-all duration-300 flex items-start space-x-3 ${
-                      agentStep >= 5 ? 'bg-slate-950 border-emerald-500/30' : 'bg-slate-900/30 border-slate-850 text-slate-500'
-                    }`}>
-                      <CheckCircle className={`h-4.5 w-4.5 shrink-0 mt-0.5 ${agentStep >= 7 ? 'text-emerald-400' : (agentStep >= 5 ? 'text-rose-450' : 'text-slate-600')}`} />
-                      <div>
-                        <div className="text-xs font-bold text-slate-100 font-mono">JVM Namespace Exception caught & Repaired</div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">If JUnit schemas mismatch, self-healing model parses JAXB errors (e.g. missing package-info XML bindings) and injects repairs directly.</p>
-                      </div>
-                    </div>
-
-                    {/* STEP 4: DURABLE SYNC */}
-                    <div className={`p-3.5 rounded-lg border transition-all duration-300 flex items-start space-x-3 ${
-                      agentStep >= 9 ? 'bg-slate-950 border-emerald-500/30' : 'bg-slate-900/30 border-slate-850 text-slate-500'
-                    }`}>
-                      <CheckCircle className={`h-4.5 w-4.5 shrink-5 mt-0.5 col-slate ${agentStep >= 10 ? 'text-emerald-400' : 'text-slate-600'}`} />
-                      <div>
-                        <div className="text-xs font-bold text-slate-100 font-mono">Synchronize Corrected Java classes model</div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Corrected classes are persisted onto standard disk storage path maps, and registered on H2 logs database structure.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
               </div>
+
             </div>
           )}
 
-          {/* TAB 4: SPRING BOOT CODE VIEWER */}
-          {activeTab === 'codeViewer' && (
-            <div className="space-y-6">
+          {/* TAB 3: DYNAMIC AI FIELD NORMALIZING */}
+          {activeTab === "mapping" && (
+            <div className="space-y-6 animate-fade-in text-left">
               
-              {/* COMPONENT INTRO */}
-              <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 flex justify-between items-center">
+              <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 flex justify-between items-center">
                 <div>
-                  <h3 className="text-base font-semibold text-white font-mono flex items-center gap-2">
-                    <FileCode className="text-emerald-400 h-5 w-5" />
-                    Generative Bridge Source Code Viewer
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono flex items-center gap-1.5">
+                    <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+                    Intelligent dynamic mappings normalizer
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Examine the complete, production-ready Java 21 classes generated by our automated Spring migration bridge system.
-                  </p>
+                  <p className="text-xs text-slate-400 mt-1">Select your active bridge integration mapping operation and invoke modern LLM parameters mapping.</p>
                 </div>
               </div>
 
-              {/* CORE SPRING CODE BLOCK SWITCHER */}
-              <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col min-h-[560px]">
-                {/* SELECTOR BAR */}
-                <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex flex-wrap gap-2 shrink-0">
-                  <button 
-                    onClick={() => setCodeFile('controller')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'controller' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    SoapBridgeController.java
-                  </button>
+              {bridges.length === 0 ? (
+                <div className="bg-slate-900 p-12 text-center rounded-xl border border-slate-850 font-mono text-xs text-slate-500">Configure an integration bridge with classic soap definitions before accessing AI mappings.</div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+                  
+                  {/* SELECT BRIDGE OPERATIONS ACCORDION */}
+                  <div className="lg:col-span-4 bg-slate-900 rounded-xl border border-slate-850 p-5 space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-widest">Selected bridge</label>
+                      <select
+                        value={selectedBridge?.id || ""}
+                        onChange={(e) => {
+                          const br = bridges.find(b => b.id === e.target.value);
+                          if (br) {
+                            setSelectedBridge(br);
+                            setSelectedOp(br.operations?.length > 0 ? br.operations[0] : null);
+                          }
+                        }}
+                        className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs font-mono text-white outline-none focus:border-slate-700"
+                      >
+                        {bridges.map(br => (
+                          <option key={br.id} value={br.id}>{br.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <button 
-                    onClick={() => setCodeFile('security')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'security' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    SecurityConfig.java
-                  </button>
+                    <div className="space-y-2 text-xs">
+                      <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-widest block text-left">Endpoints definitions</span>
+                      <div className="space-y-1.5 font-mono max-h-[340px] overflow-y-auto">
+                        {selectedBridge?.operations?.map((op: any) => (
+                          <button
+                            key={op.id}
+                            onClick={() => setSelectedOp(op)}
+                            className={`w-full text-left p-2.5 rounded border transition-all text-[11px] flex items-center justify-between cursor-pointer ${
+                              selectedOp?.id === op.id
+                                ? "bg-slate-950 border-emerald-500/30 text-white font-bold"
+                                : "bg-slate-950/40 border-transparent text-slate-450 hover:text-slate-350"
+                            }`}
+                          >
+                            <span>{op.soapOperation}</span>
+                            <span className="bg-blue-500/10 text-blue-400 font-bold px-1.5 py-0.5 rounded text-[9px]">{op.restMethod}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
-                  <button 
-                    onClick={() => setCodeFile('jwtFilter')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'jwtFilter' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    JwtAuthenticationFilter.java
-                  </button>
+                  {/* AI RESOLUTION PREVIEW SCREEN */}
+                  <div className="lg:col-span-8 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col h-[520px]">
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-850 shrink-0">
+                      <div>
+                        <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-350 flex items-center gap-1.5">
+                          <Braces className="h-4 w-4 text-emerald-400" /> Parameter map configurations: <code className="text-blue-450">{selectedOp?.restPath}</code>
+                        </span>
+                        <span className="text-[10.5px] font-mono text-slate-500 mt-0.5 block">{selectedOp?.soapAction}</span>
+                      </div>
+                      <button
+                        onClick={handleTriggerAIMapping}
+                        disabled={isMappingAI}
+                        className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-xs font-semibold text-white transition disabled:opacity-50 cursor-pointer shadow-lg flex items-center gap-1.5 shrink-0"
+                      >
+                        {isMappingAI ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        <span>AI Normalise Fields</span>
+                      </button>
+                    </div>
 
-                  <button 
-                    onClick={() => setCodeFile('service')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'service' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    SoapProxyService.java
-                  </button>
+                    <div className="flex-1 overflow-y-auto space-y-4">
+                      {selectedOp && (
+                        <div className="space-y-4">
+                          {/* Mapped Fields List */}
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-widest block text-left">Active Normalizations</span>
+                            
+                            <div className="space-y-2">
+                              {JSON.parse(selectedOp.fieldMappings || "[]").map((mapping: any, i: number) => (
+                                <div key={i} className="bg-slate-950 p-3.5 rounded-lg border border-slate-950 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-left">
+                                  <div className="flex items-center space-x-3 text-slate-200">
+                                    <span className="text-[10.5px] font-bold text-slate-450 bg-slate-900 px-2 py-1 rounded border border-slate-850">{mapping.soapField}</span>
+                                    <ArrowRight className="h-3.5 w-3.5 text-slate-650" />
+                                    <span className="text-[10.5px] font-bold text-emerald-400">{mapping.restField}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-3 text-[10.5px]">
+                                    <span className="text-slate-500 max-w-[280px] font-sans truncate" title={mapping.reasoning}>{mapping.reasoning}</span>
+                                    <span className={`px-2 py-0.5 rounded font-bold text-[9.5px] ${
+                                      mapping.confidence >= 90 ? "bg-emerald-500/10 text-emerald-450" : "bg-amber-500/10 text-amber-400"
+                                    }`}>{mapping.confidence}% Confidence</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
 
-                  <button 
-                    onClick={() => setCodeFile('entity')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'entity' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    ProxyTransactionLog.java
-                  </button>
+                          {/* Dual schemas JSON display view */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono text-left pt-2.5">
+                            <div className="border border-slate-850 rounded bg-slate-950 p-3.5">
+                              <span className="text-[10px] font-bold text-slate-500 border-b border-slate-900 pb-2 mb-2 block">Expected Request JSON schema</span>
+                              <pre className="text-slate-350 leading-relaxed overflow-auto max-h-[140px] text-[10.5px]">
+                                {JSON.stringify(JSON.parse(selectedOp.inputSchema), null, 2)}
+                              </pre>
+                            </div>
 
-                  <button 
-                    onClick={() => setCodeFile('jaxbPojo')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'jaxbPojo' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    GetUserRequestJaxb.java
-                  </button>
+                            <div className="border border-slate-850 rounded bg-slate-950 p-3.5">
+                              <span className="text-[10px] font-bold text-slate-500 border-b border-slate-900 pb-2 mb-2 block">Expected Response JSON schema</span>
+                              <pre className="text-slate-350 leading-relaxed overflow-auto max-h-[140px] text-[10.5px]">
+                                {JSON.stringify(JSON.parse(selectedOp.outputSchema), null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                  <button 
-                    onClick={() => setCodeFile('exceptionAdvice')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'exceptionAdvice' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    GlobalBridgeExceptionHandler.java
-                  </button>
+                </div>
+              )}
 
-                  <button 
-                    onClick={() => setCodeFile('pom')}
-                    className={`px-3 py-1.5 rounded text-xs font-mono transition ${
-                      codeFile === 'pom' 
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/35 font-bold' 
-                        : 'bg-slate-955 text-slate-400 border border-transparent hover:text-slate-250'
-                    }`}
-                  >
-                    pom.xml
-                  </button>
+            </div>
+          )}
+
+          {/* TAB 4: SANDBOX INTERACTIVE PLAYGROUND */}
+          {activeTab === "playground" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              
+              <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 flex justify-between items-center text-left">
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono flex items-center gap-1.5 animate-pulse">
+                    <Terminal className="h-4.5 w-4.5 text-emerald-400" />
+                    Operational transaction sandbox validation
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">Modernize requests in real time, watch Gemini validate schema parameters, review translated formats, and call custom mock SOAP servers.</p>
+                </div>
+              </div>
+
+              {bridges.length === 0 ? (
+                <div className="bg-slate-900 p-12 text-center rounded-xl border border-slate-850 font-mono text-xs text-slate-500">Configure an integration bridge with classic soap definitions before accessing playgrounds.</div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+                  
+                  {/* PLAYGROUND LEFT CONFIGS BLOCK */}
+                  <div className="lg:col-span-5 flex flex-col space-y-4">
+                    
+                    {/* Sandbox active route headers info */}
+                    <div className="bg-slate-900 rounded-xl border border-slate-850 p-4 space-y-3 text-xs text-left">
+                      <div className="space-y-1 font-mono">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active endpoint target</span>
+                        <div className="flex gap-2 items-center text-[11px] bg-slate-950 p-2 border border-slate-850 rounded">
+                          <span className="bg-blue-500/10 text-blue-400 font-bold px-1.5 py-0.5 rounded text-[9.5px] uppercase">{selectedOp?.restMethod}</span>
+                          <span className="text-white truncate font-bold">{selectedOp?.restPath}</span>
+                        </div>
+                      </div>
+
+                      {selectedOp?.authRequired && (
+                        <div className="space-y-1 font-mono text-[11px]">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">X-API-KEY security credential header</span>
+                          <select
+                            value={playgroundApiKey}
+                            onChange={(e) => setPlaygroundApiKey(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-white outline-none focus:border-slate-700"
+                          >
+                            <option value="">Use current Access session bearer token (Standard JWT)</option>
+                            {apiKeys.map(k => (
+                              <option key={k.id} value={k.key}>{k.name} ({k.key.substring(0, 8)}...)</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* REST client mockup text-area */}
+                    <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col h-[360px] text-left">
+                      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 shrink-0 flex justify-between items-center bg-slate-905">
+                        <span className="text-xs font-bold text-slate-300 font-mono">Incoming Client REST JSON</span>
+                        <button
+                          onClick={handleGenerateSamples}
+                          disabled={isSampleGenerating}
+                          className="text-[10.5px] text-emerald-400 font-mono hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                        >
+                          {isSampleGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                          <span>Generate Samples</span>
+                        </button>
+                      </div>
+
+                      <textarea
+                        value={playgroundPayload}
+                        onChange={(e) => setPlaygroundPayload(e.target.value)}
+                        className="flex-1 p-4 bg-slate-950 text-white font-mono text-xs leading-relaxed resize-none outline-none focus:bg-slate-960 border-0"
+                      />
+
+                      <div className="bg-slate-900/60 p-3 border-t border-slate-850 shrink-0 flex justify-end gap-2 text-xs font-semibold">
+                        <button
+                          onClick={handleExecuteValidator}
+                          disabled={isPayloadValidating}
+                          className="bg-slate-950 text-slate-350 border border-slate-800 hover:bg-slate-850 py-2 px-4 rounded text-xs transition cursor-pointer flex items-center gap-1.5"
+                        >
+                          {isPayloadValidating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-emerald-400" />}
+                          <span>AI Validate request</span>
+                        </button>
+
+                        <button
+                          onClick={handleExecutePlaygroundCall}
+                          disabled={playgroundLoading}
+                          className="bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.01] px-5 py-2.5 rounded text-white transition disabled:opacity-50 cursor-pointer shadow-lg flex items-center gap-1.5 font-bold"
+                        >
+                          {playgroundLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-300" /> : <Play className="h-3.5 w-3.5" />}
+                          <span>Execute proxy unmarshal</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PLAYGROUND RIGHT DUAL TIMELINES AND TRACES RESULTS */}
+                  <div className="lg:col-span-7 flex flex-col space-y-4 text-left">
+                    
+                    <div className="bg-slate-900 rounded-xl border border-slate-850 overflow-hidden flex flex-col h-[520px]">
+                      <div className="bg-slate-905 border-b border-slate-800 px-4 py-3 flex justify-between items-center shrink-0">
+                        <span className="text-xs font-bold text-slate-350 font-mono">Modernizer runtime unmarshal proxy tracing</span>
+                        <span className="text-[10px] bg-slate-850 text-slate-300 px-2 py-0.5 rounded border border-slate-800 font-mono">GATEWAY TRACE</span>
+                      </div>
+
+                      <div className="flex-1 p-4 overflow-y-auto space-y-4 font-mono text-xs leading-relaxed">
+                        
+                        {/* VALIDATION FEEDBACK BOX */}
+                        {payloadValidation && (
+                          <div className={`p-4 rounded-xl border flex gap-3 text-xs text-left ${
+                            payloadValidation.valid 
+                              ? "bg-emerald-500/15 border-emerald-500/25 text-emerald-400" 
+                              : "bg-amber-500/10 border-amber-500/25 text-amber-500"
+                          }`}>
+                            {payloadValidation.valid ? <CheckCircle className="h-5 w-5 stroke-[2.5]" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
+                            <div className="space-y-1 font-sans">
+                              <p className="font-bold text-slate-200">AI Schema validation output:</p>
+                              {payloadValidation.errors.length > 0 && (
+                                <ul className="list-disc list-inside text-[11px] font-mono text-slate-300 space-y-1">
+                                  {payloadValidation.errors.map((e: any, idx: number) => <li key={idx}>{e}</li>)}
+                                </ul>
+                              )}
+                              {payloadValidation.suggestions.length > 0 && (
+                                <div className="text-[11.5px] text-slate-400 mt-1.5 font-sans">
+                                  <strong>Gemini suggestions:</strong>
+                                  <ul className="list-disc list-inside mt-1 font-mono text-slate-450 space-y-0.5">
+                                    {payloadValidation.suggestions.map((s: any, idx: number) => <li key={idx}>{s}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {!playgroundResult ? (
+                          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2.5">
+                            <div className="h-10 w-10 rounded-full border border-slate-800 flex items-center justify-center text-slate-450 text-md">?</div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-300 animate-pulse">Awaiting Playground Execution</p>
+                              <p className="text-[11px] text-slate-450 mt-1 max-w-[340px]">Formulate JSON inputs, test schemas dynamically, and execute requests to view transactional mappers XML output payload.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4 text-left">
+                            <div className="flex justify-between items-center text-[10px] text-slate-400 bg-slate-950 p-2.5 rounded border border-slate-900 font-sans">
+                              <span>HTTP Status Code: <strong className={playgroundResult.statusCode >= 400 ? "text-rose-400" : "text-emerald-400"}>{playgroundResult.statusCode}</strong></span>
+                              <span>Target upstream response latency: <strong>{playgroundResult.latencyMs}ms</strong></span>
+                            </div>
+
+                            <div className="border border-slate-850 rounded bg-slate-950 p-3.5 space-y-1.5">
+                              <span className="text-[10px] font-bold text-slate-500 border-b border-slate-900 pb-1.5 mb-1.5 block font-sans">Returned JSON payload response</span>
+                              <pre className="text-slate-200 overflow-auto max-h-[300px] leading-relaxed text-[11px] font-mono">
+                                {JSON.stringify(playgroundResult.response, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* TAB 5: MANAGING API KEYS PROGRAMMATIC ACCESS */}
+          {activeTab === "keys" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+                
+                {/* PROVIISON API KEY CARD */}
+                <div className="lg:col-span-5 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col space-y-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white uppercase tracking-widest font-mono">Provision Developer API Credentials</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed font-sans">Generate secure programmatic authorization keys (`sb_...`). Programmatic systems can invoke modernized endpoints direct using authorization headers.</p>
+
+                  <form onSubmit={handleCreateApiKey} className="space-y-4">
+                    <div className="space-y-1.5 font-mono text-xs">
+                      <label className="text-[10px] font-semibold text-slate-500 tracking-wider">CREDENTIALS NAME / LABEL</label>
+                      <input
+                        type="text"
+                        required
+                        value={newKeyName}
+                        onChange={(e) => setNewKeyName(e.target.value)}
+                        placeholder="e.g. CRM Service Client"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white outline-none focus:border-slate-700"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isCreatingKey}
+                      className="bg-emerald-600 hover:bg-emerald-500 hover:scale-[1.01] px-5 py-2.5 rounded text-xs text-white font-semibold transition disabled:opacity-50 cursor-pointer shadow-lg inline-flex items-center gap-1.5"
+                    >
+                      {isCreatingKey ? <Loader2 className="h-4 w-4 animate-spin text-slate-300" /> : <Plus className="h-4 w-4 stroke-[2.5]" />}
+                      <span>Generate API key</span>
+                    </button>
+                  </form>
+
+                  {generatedKeyVisible && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl space-y-2 animate-fade-in text-left">
+                      <p className="text-xs font-bold leading-none font-sans">&#9888; Secret Key generated! Copy this value as it is shown only once:</p>
+                      <div className="flex gap-2 items-center bg-slate-950 border border-slate-800 p-2.5 rounded-lg">
+                        <input
+                          type="text"
+                          readOnly
+                          value={generatedKeyVisible}
+                          className="flex-1 bg-transparent text-[10.5px] text-emerald-400 font-mono font-bold outline-none border-0"
+                        />
+                        <button
+                          onClick={() => handleCopy(generatedKeyVisible)}
+                          className="text-slate-400 hover:text-white transition"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* JAVA CODE COMPILATION */}
-                <div className="flex-1 bg-slate-950 p-6 relative">
-                  <div className="absolute right-4 top-4">
-                    <button 
-                      onClick={() => handleCopy(JAVA_CODE[codeFile])}
-                      className="bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded flex items-center gap-1.5 font-mono"
+                {/* API KEYS TABLE LEDGER */}
+                <div className="lg:col-span-7 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col space-y-4">
+                  <h3 className="text-sm font-bold tracking-tight text-white uppercase tracking-widest font-mono text-left">Security Access Keys Registry</h3>
+
+                  <div className="overflow-x-auto select-none">
+                    <table className="w-full text-xs font-mono text-slate-300 text-left">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-[10px] text-slate-500 uppercase tracking-widest leading-none">
+                          <th className="pb-3">Name Key</th>
+                          <th className="pb-3">Masked token</th>
+                          <th className="pb-3">Expires</th>
+                          <th className="pb-3">Active status</th>
+                          <th className="pb-3 text-right">Revoke action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-850/40">
+                        {apiKeys.length === 0 ? (
+                          <tr><td colSpan={5} className="py-6 text-center text-slate-550">No security access keys issued.</td></tr>
+                        ) : (
+                          apiKeys.map(k => (
+                            <tr key={k.id} className="hover:bg-slate-950/10">
+                              <td className="py-3 font-sans font-semibold text-slate-200">{k.name}</td>
+                              <td className="py-3 text-slate-500">{k.key}</td>
+                              <td className="py-3 text-slate-450">{new Date(k.createdAt).toLocaleDateString([], {month: "short", day: "numeric"})}</td>
+                              <td className="py-3">
+                                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded">ACTIVE</span>
+                              </td>
+                              <td className="py-3 text-right">
+                                <button
+                                  onClick={() => handleRevokeApiKey(k.id)}
+                                  className="text-rose-450 hover:text-rose-300 font-sans transition pr-1.5"
+                                >
+                                  Revoke Key
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 6: JAVA EXPORTER SOURCE CODES PREVIEWS */}
+          {activeTab === "java" && (
+            <div className="space-y-6 animate-fade-in text-left">
+              
+              <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-800 flex justify-between items-center text-left">
+                <div>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-widest font-mono flex items-center gap-1.5">
+                    <FileCode className="h-4.5 w-4.5 text-emerald-400" />
+                    Enterprise Java Spring Boot 3 / Security 6 exporter
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">Review, copy, or download the fully validated compiled Spring files configurations directly.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+                
+                {/* JAVA CONFIGS SELECTION ACCORDION */}
+                <div className="lg:col-span-4 bg-slate-900 rounded-xl border border-slate-850 p-5 space-y-4">
+                  <span className="text-[10px] font-bold font-mono text-slate-500 uppercase tracking-widest block">Spring source blocks</span>
+                  
+                  <div className="space-y-1.5 font-mono text-xs">
+                    <button
+                      onClick={() => setCodeFile("aiGateway")}
+                      className={`w-full text-left p-2.5 rounded border transition-all flex items-center justify-between cursor-pointer ${
+                        codeFile === "aiGateway" ? "bg-slate-950 border-emerald-500/30 text-white font-bold" : "bg-slate-950/40 border-transparent text-slate-450 hover:text-slate-350"
+                      }`}
                     >
-                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copied ? "Copied" : "Copy Source"}
+                      <span>AiSoapRestGatewayApplication.java</span>
+                      <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-emerald-500/15">CORE</span>
+                    </button>
+
+                    <button
+                      onClick={() => setCodeFile("controller")}
+                      className={`w-full text-left p-2.5 rounded border transition-all flex items-center justify-between cursor-pointer ${
+                        codeFile === "controller" ? "bg-slate-950 border-emerald-500/30 text-white font-bold" : "bg-slate-950/40 border-transparent text-slate-450 hover:text-slate-350"
+                      }`}
+                    >
+                      <span>SoapBridgeController.java</span>
+                    </button>
+
+                    <button
+                      onClick={() => setCodeFile("pom")}
+                      className={`w-full text-left p-2.5 rounded border transition-all flex items-center justify-between cursor-pointer ${
+                        codeFile === "pom" ? "bg-slate-950 border-emerald-500/30 text-white font-bold" : "bg-slate-950/40 border-transparent text-slate-450 hover:text-slate-350"
+                      }`}
+                    >
+                      <span>pom.xml (Mvn dependencies)</span>
                     </button>
                   </div>
-                  <pre className="text-slate-250 font-mono text-[11.5px] leading-relaxed overflow-auto max-h-[580px] text-left">
-                    {JAVA_CODE[codeFile]}
+                </div>
+
+                {/* SHOWING CODES PREVIEWS */}
+                <div className="lg:col-span-8 bg-slate-900 rounded-xl border border-slate-850 p-6 flex flex-col h-[520px]">
+                  <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-850 shrink-0">
+                    <span className="text-xs font-bold font-mono uppercase tracking-widest text-slate-200">{codeFile}.java spec source view</span>
+                    <button
+                      onClick={() => handleCopy(JAVA_CLASS_CODES[codeFile])}
+                      className="text-xs text-slate-450 hover:text-white transition-all font-mono flex items-center gap-1 cursor-pointer hover:underline font-bold"
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copy Code block
+                    </button>
+                  </div>
+
+                  <pre className="flex-1 overflow-auto text-emerald-400 text-[10.5px] font-mono bg-slate-950 p-4 rounded-xl leading-relaxed border border-slate-950">
+                    {JAVA_CLASS_CODES[codeFile]}
                   </pre>
                 </div>
+
               </div>
 
             </div>
           )}
 
         </main>
+
       </div>
     </div>
   );
