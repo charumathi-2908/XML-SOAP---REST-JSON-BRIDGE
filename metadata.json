@@ -1,5 +1,5 @@
 {
-  "name": "XML/SOAP to JSON/REST Bridge",
+  "name": "XML SOAP to JSON REST Bridge",
   "description": "An automated XML/SOAP to JSON/REST Bridge featuring AI mapping, dynamic routing, and instant legacy endpoint modernization with custom authorization systems.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
